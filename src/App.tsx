@@ -5,7 +5,7 @@ function App() {
   const [msg, setMsg] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonsAreaRef = useRef<HTMLDivElement | null>(null);
-  // NOTE: ahora es HTMLDivElement porque NO es un <button> real
+  // NOTE: ahora referenciamos un div (falso botón)
   const noBtnRef = useRef<HTMLDivElement | null>(null);
 
   // Posición del botón "No" (en px relativos al área de botones)
@@ -55,11 +55,16 @@ function App() {
       // colocar "No" a la derecha dentro del área de botones
       const left = Math.round(rect.width * 0.65 - btn.offsetWidth / 2);
       const top = Math.round(rect.height * 0.25); // un poco abajo dentro del área
-      // clamp por seguridad para que nunca quede fuera
-      const margin = 8;
-      const maxLeft = Math.max(0, rect.width - btn.offsetWidth - margin);
-      const finalLeft = Math.min(Math.max(margin, left), maxLeft);
-      setNoPos({ left: Math.max(8, finalLeft), top: Math.max(6, top) });
+
+      // clamp por seguridad para que nunca quede fuera del card
+      const cardRect = containerRef.current?.getBoundingClientRect();
+      if (cardRect) {
+        const maxLeft = Math.max(8, cardRect.width - btn.offsetWidth - 8);
+        const clampedLeft = Math.min(Math.max(8, left), maxLeft);
+        setNoPos({ left: clampedLeft, top: Math.max(6, top) });
+      } else {
+        setNoPos({ left: Math.max(8, left), top: Math.max(6, top) });
+      }
     };
     setInitial();
     window.addEventListener("resize", setInitial);
@@ -67,45 +72,67 @@ function App() {
   }, []);
 
   /**
-   * Mueve el botón "No".
-   * Si se pasan clientX/clientY (coordenadas del cursor en ventana),
-   * elige la posición dentro del área que maximice la distancia al cursor.
-   * Si no, usa una posición aleatoria.
+   * Mueve el "botón" No.
+   * Ahora permite escapar fuera de la caja de botones (hasta los límites del card),
+   * y genera muchos candidatos (grilla densa + aleatorios) para que tenga muchas posibilidades.
    */
   const moveNoButton = (clientX?: number, clientY?: number) => {
     const ba = buttonsAreaRef.current;
     const btn = noBtnRef.current;
-    if (!ba || !btn) return;
-    const areaRect = ba.getBoundingClientRect();
-    const margin = 10;
+    const card = containerRef.current;
+    if (!ba || !btn || !card) return;
+
+    // Permitimos que el No se mueva en el área del card (no solo dentro del buttons-area)
+    const areaRect = card.getBoundingClientRect();
+    const margin = 8;
     const btnW = btn.offsetWidth;
     const btnH = btn.offsetHeight;
-    // maxLeft/maxTop *relativos a la caja* (ya restamos el tamaño del botón)
+
     const maxLeft = Math.max(0, areaRect.width - btnW - margin * 2);
     const maxTop = Math.max(0, areaRect.height - btnH - margin * 2);
 
-    // Si tenemos coords del cursor, creamos candidatos y escogemos el que esté más lejos del cursor
     if (typeof clientX === "number" && typeof clientY === "number") {
       const candidates: { left: number; top: number }[] = [];
 
-      // posiciones en una grilla (esquinas + intermedias)
-      for (let i = 0; i <= 4; i++) {
-        for (let j = 0; j <= 2; j++) {
-          const left = Math.round(margin + (i / 4) * maxLeft);
-          const top = Math.round(margin + (j / 2) * maxTop);
+      // grilla densa (5 x 4) dentro del card para muchas posiciones posibles
+      for (let i = 0; i <= 6; i++) {
+        for (let j = 0; j <= 4; j++) {
+          const left = Math.round(margin + (i / 6) * maxLeft);
+          const top = Math.round(margin + (j / 4) * maxTop);
           candidates.push({ left, top });
         }
       }
 
-      // algunas posiciones aleatorias para variedad
-      for (let k = 0; k < 8; k++) {
+      // más candidatos semi-aleatorios (para evitar patrones visibles)
+      for (let k = 0; k < 24; k++) {
         candidates.push({
           left: Math.round(margin + Math.random() * maxLeft),
           top: Math.round(margin + Math.random() * maxTop),
         });
       }
 
-      // convertir client coords a coords relativas al área (centro del posible botón)
+      // algunos candidatos que están ligeramente fuera del buttons-area (para salirse del box)
+      const baRect = ba.getBoundingClientRect();
+      const offsetLeftToCard = baRect.left - areaRect.left;
+      const offsetTopToCard = baRect.top - areaRect.top;
+      // posiciones alrededor del buttons-area (arriba/abajo/izq/der) para "salirse"
+      const around = [
+        { x: offsetLeftToCard - btnW * 0.6, y: offsetTopToCard }, // izquierda fuera
+        { x: offsetLeftToCard + baRect.width + btnW * 0.2, y: offsetTopToCard }, // derecha fuera
+        { x: offsetLeftToCard, y: offsetTopToCard - btnH * 0.6 }, // arriba fuera
+        {
+          x: offsetLeftToCard,
+          y: offsetTopToCard + baRect.height + btnH * 0.2,
+        }, // abajo fuera
+      ];
+      for (const a of around) {
+        candidates.push({
+          left: Math.round(Math.min(Math.max(margin, a.x), maxLeft)),
+          top: Math.round(Math.min(Math.max(margin, a.y), maxTop)),
+        });
+      }
+
+      // convertir client coords a coords relativas al card (centro del posible botón)
       const toWindowCoords = (cand: { left: number; top: number }) => {
         return {
           x: areaRect.left + cand.left + btnW / 2,
@@ -127,7 +154,7 @@ function App() {
         }
       }
 
-      // clamp final (por seguridad)
+      // clamp final para seguridad (no salga del card)
       const finalLeft = Math.min(Math.max(margin, best.left), maxLeft + margin);
       const finalTop = Math.min(Math.max(margin, best.top), maxTop + margin);
 
@@ -135,38 +162,39 @@ function App() {
       return;
     }
 
-    // si no hay coords, posición aleatoria (fallback)
+    // fallback aleatorio dentro del card
     const left = Math.round(margin + Math.random() * maxLeft);
     const top = Math.round(margin + Math.random() * maxTop);
     setNoPos({ left, top });
   };
 
-  // Detectar proximidad del mouse al botón "No" (usando coords relativas al área de botones)
-  // (seguimos manteniendo la detección global por si el cursor se acerca desde otras zonas)
+  // Detectar proximidad del mouse al "botón" No
   const handleMouseMove = (e: React.MouseEvent) => {
     const ba = buttonsAreaRef.current;
     const btn = noBtnRef.current;
     if (!ba || !btn) return;
     const baRect = ba.getBoundingClientRect();
 
-    // centro del botón NO (en coordenadas de ventana)
+    // centro del "botón" NO (en coordenadas de ventana)
     const bx =
-      baRect.left + (noPos ? noPos.left : btn.offsetLeft) + btn.offsetWidth / 2;
+      (containerRef.current?.getBoundingClientRect().left ?? baRect.left) +
+      (noPos ? noPos.left : btn.offsetLeft) +
+      btn.offsetWidth / 2;
     const by =
-      baRect.top + (noPos ? noPos.top : btn.offsetTop) + btn.offsetHeight / 2;
+      (containerRef.current?.getBoundingClientRect().top ?? baRect.top) +
+      (noPos ? noPos.top : btn.offsetTop) +
+      btn.offsetHeight / 2;
     const dx = e.clientX - bx;
     const dy = e.clientY - by;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // umbral; si está muy cerca, movemos (esto ayuda si el cursor viene desde lejos)
     const THRESHOLD = 120;
     if (dist < THRESHOLD) {
-      // pasar coords para maximizar distancia
       moveNoButton(e.clientX, e.clientY);
     }
   };
 
-  // Eventos touch: mover botón si el dedo se acerca (pasamos coords para maximizar distancia)
+  // Eventos touch: mover "botón" si el dedo se acerca
   useEffect(() => {
     const onTouch = (ev: TouchEvent) => {
       const touch = ev.touches[0];
@@ -188,9 +216,7 @@ function App() {
       {/* Estilos locales */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
-
         .bg {
-          /* mantengo el fondo que ya tenías */
           position: fixed;
           inset: 0;
           width: 100%;
@@ -204,7 +230,6 @@ function App() {
           box-sizing: border-box;
           overflow: hidden;
         }
-
         .card {
           width: 100%;
           max-width: 920px;
@@ -215,7 +240,6 @@ function App() {
           position: relative;
           overflow: hidden;
         }
-
         .title {
           text-align: center;
           font-size: 38px;
@@ -225,7 +249,6 @@ function App() {
           color: #9a0839;
           text-shadow: 0 1px 0 rgba(255,255,255,0.6);
         }
-
         .subtitle {
           text-align: center;
           font-size: 18px;
@@ -233,11 +256,9 @@ function App() {
           color: #6b1630;
           opacity: 0.9;
         }
-
         .heart-row {
           display:flex; gap:10px; justify-content:center; margin-bottom: 20px;
         }
-
         .heart {
           width: 24px; height: 24px; transform: rotate(-45deg);
           position: relative;
@@ -252,7 +273,6 @@ function App() {
         }
         .heart:before { top: -12px; left: 0; }
         .heart:after { left: 12px; top: 0; }
-
         .panel {
           position: relative;
           height: 320px;
@@ -260,7 +280,6 @@ function App() {
           align-items: center;
           justify-content: center;
         }
-
         .cta {
           width: 560px;
           max-width: 95%;
@@ -270,25 +289,12 @@ function App() {
           background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
           box-shadow: 0 6px 18px rgba(155,10,60,0.08);
         }
-
-        /* --- CAMBIO: hacemos el box de botones un poco más alto en móvil --- */
+        /* CAMBIO: box de botones un poco más grande */
         .buttons-area {
           position: relative;
-          height: 110px; /* original */
+          height: 140px; /* aumenta ligeramente desde 110px */
           margin-top: 18px;
         }
-
-        @media (max-width: 520px) {
-          .buttons-area {
-            height: 150px; /* un poco más de espacio en móvil */
-          }
-
-          .cta {
-            padding: 22px;
-          }
-        }
-        /* --------------------------------------------------------------- */
-
         .btn {
           padding: 12px 22px;
           border-radius: 999px;
@@ -302,35 +308,23 @@ function App() {
           -webkit-tap-highlight-color: transparent;
         }
         .btn:active { transform: scale(0.97); }
-
         .btn-yes {
           background: linear-gradient(90deg,#ff6f9a,#ff3e7a);
           color: white;
-          /* posicionamiento por defecto: centrado para evitar overflow en móvil */
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-          top: 12px;
-          min-width: 120px;
         }
-
-        /* NO es ahora un 'falso-botón' (div), con estilos de botón pero sin efectos de focus/presionar) */
+        /* NO luce como botón pero es un div; no tendrá efectos de foco/presionado */
         .btn-no {
           background: linear-gradient(90deg,#fff2f7,#ffe7ef);
           color: #8b1330;
           border: 1px solid rgba(139,19,48,0.06);
           position: absolute;
           min-width: 120px;
-          /* evitar que el mobile browser muestre color al tocar */
+          text-align: center;
+          line-height: 36px;
           -webkit-tap-highlight-color: transparent;
           touch-action: none;
         }
-        /* quitar cualquier transform en active para la 'falsa' pieza */
-        .btn-no:active { transform: none; }
-        .btn-no:focus { outline: none; }
-
         .btn[disabled] { opacity: 0.6; cursor: default; transform: none; }
-
         .floating-heart {
           position: absolute;
           width: 16px; height: 16px; pointer-events: none;
@@ -402,17 +396,24 @@ function App() {
                     ref={buttonsAreaRef}
                     aria-hidden={false}
                   >
-                    {/* Botón YES - fijo (seguimos usando <button> para Yes) */}
+                    {/* Botón YES - fijo */}
                     <button
                       className="btn btn-yes"
                       onClick={() => enviarRespuesta("yes")}
                       disabled={loading}
+                      style={{
+                        position: "absolute",
+                        left: "calc(50% - 160px)",
+                        top: 12,
+                        transform: "translateX(-0%)",
+                        minWidth: 120,
+                      }}
                       aria-label="Responder sí"
                     >
                       Yes
                     </button>
 
-                    {/* "Falso botón" NO: es un div que solo parece botón */}
+                    {/* "Falso botón" NO: es un div que solo parece botón y puede salirse del box */}
                     <div
                       ref={noBtnRef}
                       className="btn btn-no"
