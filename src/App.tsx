@@ -5,10 +5,9 @@ function App() {
   const [msg, setMsg] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonsAreaRef = useRef<HTMLDivElement | null>(null);
-  // CAMBIO MÍNIMO: ref ahora apunta a HTMLDivElement porque dejamos el "No" como <div>
+  // CAMBIO MÍNIMO: ref ahora apunta a HTMLDivElement porque el "No" será <div>
   const noBtnRef = useRef<HTMLDivElement | null>(null);
 
-  // Posición del botón "No" (en px relativos al área de botones)
   const [noPos, setNoPos] = useState<{ left: number; top: number } | null>(
     null,
   );
@@ -44,7 +43,6 @@ function App() {
     }
   };
 
-  // Posicionar inicialmente botones (centrado dentro de buttons-area)
   useEffect(() => {
     const setInitial = () => {
       const ba = buttonsAreaRef.current;
@@ -52,9 +50,8 @@ function App() {
       if (!ba || !btn) return;
       const rect = ba.getBoundingClientRect();
 
-      // colocar "No" a la derecha dentro del área de botones
       const left = Math.round(rect.width * 0.65 - btn.offsetWidth / 2);
-      const top = Math.round(rect.height * 0.25); // un poco abajo dentro del área
+      const top = Math.round(rect.height * 0.25);
       setNoPos({ left: Math.max(8, left), top: Math.max(6, top) });
     };
     setInitial();
@@ -62,12 +59,6 @@ function App() {
     return () => window.removeEventListener("resize", setInitial);
   }, []);
 
-  /**
-   * Mueve el botón "No".
-   * Si se pasan clientX/clientY (coordenadas del cursor en ventana),
-   * elige la posición dentro del área que maximice la distancia al cursor.
-   * Si no, usa una posición aleatoria.
-   */
   const moveNoButton = (clientX?: number, clientY?: number) => {
     const ba = buttonsAreaRef.current;
     const btn = noBtnRef.current;
@@ -79,11 +70,9 @@ function App() {
     const maxLeft = Math.max(0, areaRect.width - btnW - margin * 2);
     const maxTop = Math.max(0, areaRect.height - btnH - margin * 2);
 
-    // Si tenemos coords del cursor, creamos candidatos y escogemos el que esté más lejos del cursor
     if (typeof clientX === "number" && typeof clientY === "number") {
       const candidates: { left: number; top: number }[] = [];
 
-      // posiciones en una grilla (esquinas + intermedias)
       for (let i = 0; i <= 4; i++) {
         for (let j = 0; j <= 2; j++) {
           const left = Math.round(margin + (i / 4) * maxLeft);
@@ -92,7 +81,6 @@ function App() {
         }
       }
 
-      // algunas posiciones aleatorias para variedad
       for (let k = 0; k < 8; k++) {
         candidates.push({
           left: Math.round(margin + Math.random() * maxLeft),
@@ -100,7 +88,6 @@ function App() {
         });
       }
 
-      // convertir client coords a coords relativas al área (centro del posible botón)
       const toWindowCoords = (cand: { left: number; top: number }) => {
         return {
           x: areaRect.left + cand.left + btnW / 2,
@@ -108,7 +95,6 @@ function App() {
         };
       };
 
-      // escoger candidato que maximice distancia al cursor
       let best = candidates[0];
       let bestDist = -1;
       for (const c of candidates) {
@@ -126,21 +112,17 @@ function App() {
       return;
     }
 
-    // si no hay coords, posición aleatoria (fallback)
     const left = Math.round(margin + Math.random() * maxLeft);
     const top = Math.round(margin + Math.random() * maxTop);
     setNoPos({ left, top });
   };
 
-  // Detectar proximidad del mouse al botón "No" (usando coords relativas al área de botones)
-  // (seguimos manteniendo la detección global por si el cursor se acerca desde otras zonas)
   const handleMouseMove = (e: React.MouseEvent) => {
     const ba = buttonsAreaRef.current;
     const btn = noBtnRef.current;
     if (!ba || !btn) return;
     const baRect = ba.getBoundingClientRect();
 
-    // centro del botón NO (en coordenadas de ventana)
     const bx =
       baRect.left + (noPos ? noPos.left : btn.offsetLeft) + btn.offsetWidth / 2;
     const by =
@@ -149,15 +131,12 @@ function App() {
     const dy = e.clientY - by;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // umbral; si está muy cerca, movemos (esto ayuda si el cursor viene desde lejos)
     const THRESHOLD = 120;
     if (dist < THRESHOLD) {
-      // pasar coords para maximizar distancia
       moveNoButton(e.clientX, e.clientY);
     }
   };
 
-  // Eventos touch: mover botón si el dedo se acerca (pasamos coords para maximizar distancia)
   useEffect(() => {
     const onTouch = (ev: TouchEvent) => {
       const touch = ev.touches[0];
@@ -180,7 +159,6 @@ function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
         .bg {
-          /* CAMBIO MÍNIMO: asegurar que el fondo cubra TODO el viewport */
           position: fixed;
           inset: 0;
           width: 100%;
@@ -268,19 +246,40 @@ function App() {
           box-shadow: 0 6px 16px rgba(0,0,0,0.12);
           transition: transform 220ms ease, box-shadow 220ms ease;
         }
-        /* CAMBIO MÍNIMO: aplicar efecto :active solo a botones que NO sean .btn-no */
+        /* CAMBIO MÍNIMO: efecto :active solo a botones que NO sean .btn-no */
         .btn:active:not(.btn-no) { transform: scale(0.97); }
+
         .btn-yes {
           background: linear-gradient(90deg,#ff6f9a,#ff3e7a);
           color: white;
         }
+
         .btn-no {
           background: linear-gradient(90deg,#fff2f7,#ffe7ef);
           color: #8b1330;
           border: 1px solid rgba(139,19,48,0.06);
-          /* aseguramos que no tenga reacciones visuales propias de <button> */
+
+          /* CAMBIO MÍNIMO importante: evitar cualquier reacción visual al tocar/press */
+          -webkit-tap-highlight-color: transparent;
+          -webkit-user-select: none;
+          -ms-user-select: none;
           user-select: none;
+          -webkit-touch-callout: none;
+          outline: none;
+          transform: none !important;
+          /* mantengo la sombra igual que antes para que el aspecto no cambie */
+          box-shadow: 0 6px 16px rgba(0,0,0,0.12);
         }
+
+        /* Asegurar que :active / :focus no cambien nada para .btn-no */
+        .btn-no:active, .btn-no:focus, .btn-no:focus-visible {
+          transform: none !important;
+          outline: none !important;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.12) !important;
+          background: linear-gradient(90deg,#fff2f7,#ffe7ef) !important;
+          color: #8b1330 !important;
+        }
+
         .btn[disabled] { opacity: 0.6; cursor: default; transform: none; }
         .floating-heart {
           position: absolute;
@@ -297,7 +296,6 @@ function App() {
 
       <div className="bg">
         <div className="card" ref={containerRef} onMouseMove={handleMouseMove}>
-          {/* floating little hearts for decoration */}
           <div
             style={{
               position: "absolute",
@@ -370,17 +368,21 @@ function App() {
                       Yes
                     </button>
 
-                    {/* CAMBIO MÍNIMO: convertimos el \"No\" a <div> que se vea exactamente igual
-                        - quitamos onClick / disabled (no queremos reacciones de botón)
-                        - mantenemos los handlers de movimiento
-                        - mantenemos minWidth/left/top/transition para que el tamaño y posicion sean idénticos */}
+                    {/* CAMBIO MÍNIMO: NO es un <button> — es un <div> visualmente idéntico.
+                        Responderá a onMouseEnter/onMouseMove para escapar y además a onMouseDown
+                        para que cuando el usuario haga click/tap, se mueva antes de cualquier
+                        efecto visual. No hay handlers que produzcan reacciones visuales. */}
                     <div
                       ref={noBtnRef}
                       className="btn btn-no"
-                      // movemos en cuanto el cursor entra o se mueve sobre el elemento
                       onMouseEnter={(e) => moveNoButton(e.clientX, e.clientY)}
                       onMouseMove={(e) => moveNoButton(e.clientX, e.clientY)}
-                      // mantenemos aria-label para compatibilidad, pero NO es un botón semántico
+                      onMouseDown={(e) => {
+                        // movemos al intentar presionar (escape inmediato)
+                        // CAMBIO MÍNIMO: prevenir selección accidental
+                        e.preventDefault();
+                        moveNoButton(e.clientX, e.clientY);
+                      }}
                       aria-label="Responder no"
                       style={{
                         position: "absolute",
@@ -389,12 +391,12 @@ function App() {
                         top: noPos ? noPos.top : 12,
                         transition:
                           "left 120ms linear, top 120ms linear, transform 60ms linear",
-                        // asegurar que el <div> se mida/centre exactamente como el botón anterior
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        // preservar comportamiento de 'disabled' visual si loading: bloquear interacciones
+                        // si loading, bloqueamos interacción igual que antes
                         pointerEvents: loading ? "none" : "auto",
+                        userSelect: "none",
                       }}
                     >
                       No
@@ -407,7 +409,6 @@ function App() {
             </div>
           </div>
 
-          {/* pequeñas partículas / corazones que flotan (decorativas) */}
           <FloatingHearts />
         </div>
       </div>
@@ -417,7 +418,6 @@ function App() {
 
 /** Pequeño componente que genera corazones flotando (decoración) */
 function FloatingHearts() {
-  // generar posiciones y retrasos para varios corazones
   const hearts = new Array(8).fill(0).map((_, i) => {
     const left = Math.round(Math.random() * 90);
     const size = 10 + Math.round(Math.random() * 18);
