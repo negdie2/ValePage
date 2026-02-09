@@ -12,6 +12,17 @@ function App() {
     null,
   );
 
+  // --- NUEVO: contador de escapes y popup de imágenes ---
+  const ESCAPE_THRESHOLD = 10; // cuando el "No" se escape 10 veces mostramos imagen
+  const imagePaths = [
+    "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcT_-bMBrCvjJEJIElcdHgvlvp7fnH5lxUo0wsPGbnhf4y0DYiS5",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT4GrI7kVfq7hVvAJlW2czaRzXX-G2Q0HcqaA&s",
+  ];
+  const imageIndexRef = useRef<number>(0); // índice actual (para uso en closures)
+  const [imgIdx, setImgIdx] = useState<number>(0); // para render
+  const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [escapeCount, setEscapeCount] = useState<number>(0);
+
   const enviarRespuesta = async (respuesta: "yes" | "no") => {
     setLoading(true);
     setMsg(null);
@@ -59,6 +70,28 @@ function App() {
     window.addEventListener("resize", setInitial);
     return () => window.removeEventListener("resize", setInitial);
   }, []);
+
+  // helper: manejar incremento de contador y mostrar popup cuando corresponda
+  const handleEscapeIncrement = () => {
+    setEscapeCount((prev) => {
+      const next = prev + 1;
+      if (next >= ESCAPE_THRESHOLD) {
+        // mostrar imagen actual
+        setImgIdx(imageIndexRef.current);
+        setShowPopup(true);
+        // reset contador
+        // programar ocultado y avanzar índice
+        setTimeout(() => {
+          setShowPopup(false);
+          imageIndexRef.current =
+            (imageIndexRef.current + 1) % imagePaths.length;
+          setImgIdx(imageIndexRef.current);
+        }, 2000);
+        return 0;
+      }
+      return next;
+    });
+  };
 
   const moveNoButton = (clientX?: number, clientY?: number) => {
     const ba = buttonsAreaRef.current;
@@ -115,6 +148,8 @@ function App() {
       );
 
       setNoPos({ left: leftRelativeToBA, top: topRelativeToBA });
+      // NUEVO: contar este escape
+      handleEscapeIncrement();
       return;
     }
 
@@ -127,6 +162,8 @@ function App() {
     const topRelativeToBA = Math.round(topCard - (baRect.top - cardRect.top));
 
     setNoPos({ left: leftRelativeToBA, top: topRelativeToBA });
+    // NUEVO: contar este escape
+    handleEscapeIncrement();
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -167,8 +204,8 @@ function App() {
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+        /* volver a la paleta rosada original */
         .bg {
-          /* volver a la paleta rosada original */
           position: fixed;
           inset: 0;
           width: 100%;
@@ -283,18 +320,19 @@ function App() {
           color: #8b1330 !important;
         }
         .btn[disabled] { opacity: 0.6; cursor: default; transform: none; }
-        .floating-heart {
-          position: absolute;
-          width: 16px; height: 16px; pointer-events: none;
-          transform: rotate(-45deg);
-          animation: floatUp 5s linear infinite;
-          display: inline-flex; align-items:center; justify-content:center;
-          font-size: 14px;
+
+        /* Estilos para popup de imagen */
+        .popup-overlay {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0,0,0,0.45);
+          z-index: 2000;
         }
-        @keyframes floatUp {
-          0% { transform: translateY(20px) scale(0.8) rotate(-45deg); opacity: 0.95; }
-          100% { transform: translateY(-140px) scale(1.05) rotate(-45deg); opacity: 0; }
-        }
+        .popup-img { max-width: 86%; max-height: 86%; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+
         .msg { text-align:center; margin-top: 16px; color:#6b1630; font-weight:600; }
       `}</style>
 
@@ -328,7 +366,7 @@ function App() {
                   role="region"
                   aria-label="Tarjeta de San Valentín"
                 >
-                  <div style={{ fontSize: 16, color: "#5a5a62" }}>
+                  <div style={{ fontSize: 16, color: "#6b1630" }}>
                     Que dices? 😉
                   </div>
 
@@ -390,6 +428,17 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Popup de imagen: aparece por 2s cada que se alcanza el threshold */}
+      {showPopup && (
+        <div className="popup-overlay" role="dialog" aria-modal="true">
+          <img
+            src={imagePaths[imgIdx]}
+            alt={`popup-${imgIdx}`}
+            className="popup-img"
+          />
+        </div>
+      )}
     </div>
   );
 }
