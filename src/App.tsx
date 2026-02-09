@@ -4,9 +4,10 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const buttonsAreaRef = useRef<HTMLDivElement | null>(null);
   const noBtnRef = useRef<HTMLButtonElement | null>(null);
 
-  // Posición del botón "No" (en px relativos al contenedor)
+  // Posición del botón "No" (en px relativos al área de botones)
   const [noPos, setNoPos] = useState<{ left: number; top: number } | null>(
     null,
   );
@@ -43,38 +44,38 @@ function App() {
     }
   };
 
-  // Posicionar inicialmente botones (centrado)
+  // Posicionar inicialmente botones (centrado dentro de buttons-area)
   useEffect(() => {
     const setInitial = () => {
-      const c = containerRef.current;
-      if (!c) return;
-      const rect = c.getBoundingClientRect();
-      // colocar "No" a la derecha inicialmente, y un poco abajo del centro
-      setNoPos({
-        left: Math.round(rect.width * 0.62),
-        top: Math.round(rect.height * 0.55),
-      });
+      const ba = buttonsAreaRef.current;
+      const btn = noBtnRef.current;
+      if (!ba || !btn) return;
+      const rect = ba.getBoundingClientRect();
+
+      // colocar "No" a la derecha dentro del área de botones
+      const left = Math.round(rect.width * 0.65 - btn.offsetWidth / 2);
+      const top = Math.round(rect.height * 0.25); // un poco abajo dentro del área
+      setNoPos({ left: Math.max(8, left), top: Math.max(6, top) });
     };
     setInitial();
     window.addEventListener("resize", setInitial);
     return () => window.removeEventListener("resize", setInitial);
   }, []);
 
-  // Mover el botón "No" a una posición aleatoria dentro del contenedor (respetando margenes)
+  // Mover el botón "No" a una posición aleatoria dentro del área de botones (respetando márgenes)
   const moveNoButton = () => {
     const now = Date.now();
     if (now - lastMoveRef.current < 120) return; // evitar movimientos demasiado frecuentes
     lastMoveRef.current = now;
 
-    const c = containerRef.current;
+    const ba = buttonsAreaRef.current;
     const btn = noBtnRef.current;
-    if (!c || !btn) return;
-    const crect = c.getBoundingClientRect();
-    const margin = 18; // margen para que no se salga
+    if (!ba || !btn) return;
+    const crect = ba.getBoundingClientRect();
+    const margin = 12; // margen para que no se salga
     const maxLeft = crect.width - btn.offsetWidth - margin;
     const maxTop = crect.height - btn.offsetHeight - margin;
 
-    // generar posición que no quede muy cerca de la esquina superior (visualmente)
     const left = Math.round(
       margin + Math.random() * Math.max(0, maxLeft - margin),
     );
@@ -85,16 +86,18 @@ function App() {
     setNoPos({ left, top });
   };
 
-  // Detectar proximidad del mouse al botón "No"
+  // Detectar proximidad del mouse al botón "No" (usando coords relativas al área de botones)
   const handleMouseMove = (e: React.MouseEvent) => {
-    const c = containerRef.current;
+    const ba = buttonsAreaRef.current;
     const btn = noBtnRef.current;
-    if (!c || !btn) return;
-    const crect = c.getBoundingClientRect();
+    if (!ba || !btn) return;
+    const baRect = ba.getBoundingClientRect();
+
+    // centro del botón NO (en coordenadas de ventana)
     const bx =
-      crect.left + (noPos ? noPos.left : btn.offsetLeft) + btn.offsetWidth / 2;
+      baRect.left + (noPos ? noPos.left : btn.offsetLeft) + btn.offsetWidth / 2;
     const by =
-      crect.top + (noPos ? noPos.top : btn.offsetTop) + btn.offsetHeight / 2;
+      baRect.top + (noPos ? noPos.top : btn.offsetTop) + btn.offsetHeight / 2;
     const dx = e.clientX - bx;
     const dy = e.clientY - by;
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -106,21 +109,21 @@ function App() {
     }
   };
 
-  // Si el usuario toca (touch), mover el botón cuando el dedo se acerque (opcional)
+  // Eventos touch: mover botón si el dedo se acerca
   useEffect(() => {
     const onTouch = (ev: TouchEvent) => {
       const touch = ev.touches[0];
       if (!touch) return;
-      const c = containerRef.current;
+      const ba = buttonsAreaRef.current;
       const btn = noBtnRef.current;
-      if (!c || !btn) return;
-      const crect = c.getBoundingClientRect();
+      if (!ba || !btn) return;
+      const baRect = ba.getBoundingClientRect();
       const bx =
-        crect.left +
+        baRect.left +
         (noPos ? noPos.left : btn.offsetLeft) +
         btn.offsetWidth / 2;
       const by =
-        crect.top + (noPos ? noPos.top : btn.offsetTop) + btn.offsetHeight / 2;
+        baRect.top + (noPos ? noPos.top : btn.offsetTop) + btn.offsetHeight / 2;
       const dx = touch.clientX - bx;
       const dy = touch.clientY - by;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -303,7 +306,11 @@ function App() {
                     botón travieso 😉
                   </div>
 
-                  <div className="buttons-area" aria-hidden={false}>
+                  <div
+                    className="buttons-area"
+                    ref={buttonsAreaRef}
+                    aria-hidden={false}
+                  >
                     {/* Botón YES - fijo */}
                     <button
                       className="btn btn-yes"
