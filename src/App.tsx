@@ -5,7 +5,8 @@ function App() {
   const [msg, setMsg] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonsAreaRef = useRef<HTMLDivElement | null>(null);
-  const noBtnRef = useRef<HTMLButtonElement | null>(null);
+  // NOTE: ahora es HTMLDivElement porque NO es un <button> real
+  const noBtnRef = useRef<HTMLDivElement | null>(null);
 
   // Posición del botón "No" (en px relativos al área de botones)
   const [noPos, setNoPos] = useState<{ left: number; top: number } | null>(
@@ -54,7 +55,11 @@ function App() {
       // colocar "No" a la derecha dentro del área de botones
       const left = Math.round(rect.width * 0.65 - btn.offsetWidth / 2);
       const top = Math.round(rect.height * 0.25); // un poco abajo dentro del área
-      setNoPos({ left: Math.max(8, left), top: Math.max(6, top) });
+      // clamp por seguridad para que nunca quede fuera
+      const margin = 8;
+      const maxLeft = Math.max(0, rect.width - btn.offsetWidth - margin);
+      const finalLeft = Math.min(Math.max(margin, left), maxLeft);
+      setNoPos({ left: Math.max(8, finalLeft), top: Math.max(6, top) });
     };
     setInitial();
     window.addEventListener("resize", setInitial);
@@ -75,6 +80,7 @@ function App() {
     const margin = 10;
     const btnW = btn.offsetWidth;
     const btnH = btn.offsetHeight;
+    // maxLeft/maxTop *relativos a la caja* (ya restamos el tamaño del botón)
     const maxLeft = Math.max(0, areaRect.width - btnW - margin * 2);
     const maxTop = Math.max(0, areaRect.height - btnH - margin * 2);
 
@@ -121,7 +127,11 @@ function App() {
         }
       }
 
-      setNoPos({ left: best.left, top: best.top });
+      // clamp final (por seguridad)
+      const finalLeft = Math.min(Math.max(margin, best.left), maxLeft + margin);
+      const finalTop = Math.min(Math.max(margin, best.top), maxTop + margin);
+
+      setNoPos({ left: finalLeft, top: finalTop });
       return;
     }
 
@@ -178,8 +188,9 @@ function App() {
       {/* Estilos locales */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+
         .bg {
-          /* CAMBIO MÍNIMO: asegurar que el fondo cubra TODO el viewport */
+          /* mantengo el fondo que ya tenías */
           position: fixed;
           inset: 0;
           width: 100%;
@@ -193,6 +204,7 @@ function App() {
           box-sizing: border-box;
           overflow: hidden;
         }
+
         .card {
           width: 100%;
           max-width: 920px;
@@ -203,6 +215,7 @@ function App() {
           position: relative;
           overflow: hidden;
         }
+
         .title {
           text-align: center;
           font-size: 38px;
@@ -212,6 +225,7 @@ function App() {
           color: #9a0839;
           text-shadow: 0 1px 0 rgba(255,255,255,0.6);
         }
+
         .subtitle {
           text-align: center;
           font-size: 18px;
@@ -219,9 +233,11 @@ function App() {
           color: #6b1630;
           opacity: 0.9;
         }
+
         .heart-row {
           display:flex; gap:10px; justify-content:center; margin-bottom: 20px;
         }
+
         .heart {
           width: 24px; height: 24px; transform: rotate(-45deg);
           position: relative;
@@ -236,6 +252,7 @@ function App() {
         }
         .heart:before { top: -12px; left: 0; }
         .heart:after { left: 12px; top: 0; }
+
         .panel {
           position: relative;
           height: 320px;
@@ -243,6 +260,7 @@ function App() {
           align-items: center;
           justify-content: center;
         }
+
         .cta {
           width: 560px;
           max-width: 95%;
@@ -252,11 +270,25 @@ function App() {
           background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
           box-shadow: 0 6px 18px rgba(155,10,60,0.08);
         }
+
+        /* --- CAMBIO: hacemos el box de botones un poco más alto en móvil --- */
         .buttons-area {
           position: relative;
-          height: 110px;
+          height: 110px; /* original */
           margin-top: 18px;
         }
+
+        @media (max-width: 520px) {
+          .buttons-area {
+            height: 150px; /* un poco más de espacio en móvil */
+          }
+
+          .cta {
+            padding: 22px;
+          }
+        }
+        /* --------------------------------------------------------------- */
+
         .btn {
           padding: 12px 22px;
           border-radius: 999px;
@@ -266,18 +298,39 @@ function App() {
           font-size: 16px;
           box-shadow: 0 6px 16px rgba(0,0,0,0.12);
           transition: transform 220ms ease, box-shadow 220ms ease;
+          user-select: none;
+          -webkit-tap-highlight-color: transparent;
         }
         .btn:active { transform: scale(0.97); }
+
         .btn-yes {
           background: linear-gradient(90deg,#ff6f9a,#ff3e7a);
           color: white;
+          /* posicionamiento por defecto: centrado para evitar overflow en móvil */
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          top: 12px;
+          min-width: 120px;
         }
+
+        /* NO es ahora un 'falso-botón' (div), con estilos de botón pero sin efectos de focus/presionar) */
         .btn-no {
           background: linear-gradient(90deg,#fff2f7,#ffe7ef);
           color: #8b1330;
           border: 1px solid rgba(139,19,48,0.06);
+          position: absolute;
+          min-width: 120px;
+          /* evitar que el mobile browser muestre color al tocar */
+          -webkit-tap-highlight-color: transparent;
+          touch-action: none;
         }
+        /* quitar cualquier transform en active para la 'falsa' pieza */
+        .btn-no:active { transform: none; }
+        .btn-no:focus { outline: none; }
+
         .btn[disabled] { opacity: 0.6; cursor: default; transform: none; }
+
         .floating-heart {
           position: absolute;
           width: 16px; height: 16px; pointer-events: none;
@@ -349,37 +402,31 @@ function App() {
                     ref={buttonsAreaRef}
                     aria-hidden={false}
                   >
-                    {/* Botón YES - fijo */}
+                    {/* Botón YES - fijo (seguimos usando <button> para Yes) */}
                     <button
                       className="btn btn-yes"
                       onClick={() => enviarRespuesta("yes")}
                       disabled={loading}
-                      style={{
-                        position: "absolute",
-                        left: "calc(50% - 160px)",
-                        top: 12,
-                        transform: "translateX(-0%)",
-                        minWidth: 120,
-                      }}
                       aria-label="Responder sí"
                     >
                       Yes
                     </button>
 
-                    {/* Botón NO - se mueve: ahora imposible de atrapar */}
-                    <button
+                    {/* "Falso botón" NO: es un div que solo parece botón */}
+                    <div
                       ref={noBtnRef}
                       className="btn btn-no"
-                      // movemos en cuanto el cursor entra o se mueve sobre el botón
+                      // movemos en cuanto el cursor entra o se mueve sobre la "falsa pieza"
                       onMouseEnter={(e) => moveNoButton(e.clientX, e.clientY)}
                       onMouseMove={(e) => moveNoButton(e.clientX, e.clientY)}
-                      // seguridad extra: si alguien logra darle click, prevenimos la acción
-                      onClick={(e) => e.preventDefault()}
-                      disabled={loading}
-                      aria-label="Responder no"
+                      // también para touch (móvil)
+                      onTouchStart={(ev) => {
+                        const t = ev.touches && ev.touches[0];
+                        if (t) moveNoButton(t.clientX, t.clientY);
+                      }}
+                      role="button"
+                      aria-label="Responder no (no clickeable)"
                       style={{
-                        position: "absolute",
-                        minWidth: 120,
                         left: noPos ? noPos.left : "calc(50% + 40px)",
                         top: noPos ? noPos.top : 12,
                         transition:
@@ -387,7 +434,7 @@ function App() {
                       }}
                     >
                       No
-                    </button>
+                    </div>
                   </div>
 
                   {msg && <div className="msg">{msg}</div>}
