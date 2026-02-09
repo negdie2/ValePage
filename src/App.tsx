@@ -191,13 +191,14 @@ function App() {
       {/* Estilos locales */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+        /* DISEÑO: temática gatitos + sushi (cambios mínimos visuales) */
         .bg {
           position: fixed;
           inset: 0;
           width: 100%;
           height: 100%;
-          background: radial-gradient(closest-side at 10% 10%, #fff0f6, transparent 20%),
-                      linear-gradient(135deg, #ffe6f0 0%, #ffd1e8 30%, #ff9cc0 100%);
+          /* fondo más neutro y "pantalla" temática: suave beige + verde sushi */
+          background: linear-gradient(180deg, #f6f3ef 0%, #e8f8f2 50%, #f6f3ef 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -208,9 +209,9 @@ function App() {
         .card {
           width: 100%;
           max-width: 920px;
-          background: rgba(255,255,255,0.85);
+          background: rgba(255,255,255,0.96); /* un poquito más blanco para contraste */
           border-radius: 22px;
-          box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.08);
           padding: 44px 36px;
           position: relative;
           overflow: hidden;
@@ -221,33 +222,26 @@ function App() {
           font-weight: 800;
           letter-spacing: -0.02em;
           margin: 6px 0 8px;
-          color: #9a0839;
+          color: #2b3a2b; /* tono más natural */
           text-shadow: 0 1px 0 rgba(255,255,255,0.6);
         }
         .subtitle {
           text-align: center;
           font-size: 18px;
           margin-bottom: 28px;
-          color: #6b1630;
-          opacity: 0.9;
+          color: #4a5a4a;
+          opacity: 0.95;
         }
         .heart-row {
           display:flex; gap:10px; justify-content:center; margin-bottom: 20px;
         }
-        .heart {
-          width: 24px; height: 24px; transform: rotate(-45deg);
+        /* sustituimos .heart por .icon que mostrará emoji (gatito/sushi) */
+        .icon {
+          font-size: 24px;
+          line-height: 1;
+          transform: rotate(0deg);
           position: relative;
         }
-        .heart:before, .heart:after {
-          content: "";
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          background: linear-gradient(180deg,#ff5d8f,#ff2d6f);
-          position: absolute;
-        }
-        .heart:before { top: -12px; left: 0; }
-        .heart:after { left: 12px; top: 0; }
         .panel {
           position: relative;
           height: 320px;
@@ -261,8 +255,8 @@ function App() {
           text-align: center;
           padding: 28px;
           border-radius: 14px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
-          box-shadow: 0 6px 18px rgba(155,10,60,0.08);
+          background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,255,250,0.95));
+          box-shadow: 0 6px 18px rgba(60,80,60,0.04);
         }
         .buttons-area {
           position: relative;
@@ -276,7 +270,7 @@ function App() {
           font-weight: 700;
           cursor: pointer;
           font-size: 16px;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+          box-shadow: 0 6px 16px rgba(0,0,0,0.08);
           transition: transform 220ms ease, box-shadow 220ms ease;
           box-sizing: border-box; /* asegurar misma caja para ambos */
         }
@@ -284,14 +278,14 @@ function App() {
         .btn:active:not(.btn-no) { transform: scale(0.97); }
 
         .btn-yes {
-          background: linear-gradient(90deg,#ff6f9a,#ff3e7a);
+          background: linear-gradient(90deg,#7bd389,#3fb36f);
           color: white;
         }
 
         .btn-no {
-          background: linear-gradient(90deg,#fff2f7,#ffe7ef);
-          color: #8b1330;
-          border: 1px solid rgba(139,19,48,0.06);
+          background: linear-gradient(90deg,#fffefc,#fffdf6);
+          color: #2b3a2b;
+          border: 1px solid rgba(43,58,43,0.06);
 
           /* CAMBIO MÍNIMO importante: evitar cualquier reacción visual al tocar/press */
           -webkit-tap-highlight-color: transparent;
@@ -301,43 +295,47 @@ function App() {
           -webkit-touch-callout: none;
           outline: none;
           transform: none !important;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+          box-shadow: 0 6px 16px rgba(0,0,0,0.08);
         }
 
         .btn-no:active, .btn-no:focus, .btn-no:focus-visible {
           transform: none !important;
           outline: none !important;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.12) !important;
-          background: linear-gradient(90deg,#fff2f7,#ffe7ef) !important;
-          color: #8b1330 !important;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important;
+          background: linear-gradient(90deg,#fffefc,#fffdf6) !important;
+          color: #2b3a2b !important;
         }
 
         .btn[disabled] { opacity: 0.6; cursor: default; transform: none; }
         .floating-heart {
           position: absolute;
           width: 16px; height: 16px; pointer-events: none;
-          transform: rotate(-45deg);
+          transform: rotate(0deg);
           animation: floatUp 5s linear infinite;
+          display: inline-flex; align-items:center; justify-content:center;
+          font-size: 14px;
         }
         @keyframes floatUp {
-          0% { transform: translateY(20px) scale(0.8) rotate(-45deg); opacity: 0.95; }
-          100% { transform: translateY(-140px) scale(1.05) rotate(-45deg); opacity: 0; }
+          0% { transform: translateY(20px) scale(0.8); opacity: 0.95; }
+          100% { transform: translateY(-140px) scale(1.05); opacity: 0; }
         }
-        .msg { text-align:center; margin-top: 16px; color:#6b1630; font-weight:600; }
+        .msg { text-align:center; margin-top: 16px; color:#4a5a4a; font-weight:600; }
       `}</style>
 
       <div className="bg">
         <div className="card" ref={containerRef} onMouseMove={handleMouseMove}>
+          {/* ICONOS decorativos: gato arriba-izquierda y sushi abajo-derecha */}
           <div
             style={{
               position: "absolute",
               left: 20,
               top: 10,
-              opacity: 0.9,
+              opacity: 0.95,
+              fontSize: 28,
             }}
             aria-hidden
           >
-            <div className="heart" />
+            <div className="icon">🐱</div>
           </div>
 
           <div
@@ -345,21 +343,21 @@ function App() {
               position: "absolute",
               right: 20,
               bottom: 18,
-              opacity: 0.9,
+              opacity: 0.95,
+              fontSize: 28,
             }}
           >
-            <div className="heart" />
+            <div className="icon">🍣</div>
           </div>
 
           <div style={{ display: "flex", justifyContent: "center" }}>
             <div style={{ width: "100%", maxWidth: 780 }}>
               <div className="heart-row" aria-hidden>
-                <div className="heart" />
-                <div
-                  className="heart"
-                  style={{ transform: "rotate(-45deg) scale(1.1)" }}
-                />
-                <div className="heart" />
+                <div className="icon">🐱</div>
+                <div className="icon" style={{ transform: "scale(1.1)" }}>
+                  🍣
+                </div>
+                <div className="icon">🐱</div>
               </div>
 
               <h1 className="title">¿San Valentine?</h1>
@@ -374,7 +372,7 @@ function App() {
                   role="region"
                   aria-label="Tarjeta de San Valentín"
                 >
-                  <div style={{ fontSize: 16, color: "#6b1630" }}>
+                  <div style={{ fontSize: 16, color: "#4a5a4a" }}>
                     Que dices? 😉
                   </div>
 
@@ -438,6 +436,7 @@ function App() {
             </div>
           </div>
 
+          {/* pequeñas partículas / iconos que flotan (gatitos y sushi) */}
           <FloatingHearts />
         </div>
       </div>
@@ -445,19 +444,22 @@ function App() {
   );
 }
 
-/** Pequeño componente que genera corazones flotando (decoración) */
+/** Pequeño componente que genera iconos flotando (gatitos/sushi) */
 function FloatingHearts() {
-  const hearts = new Array(8).fill(0).map((_, i) => {
+  // generar posiciones y retrasos para varios iconos
+  const icons = new Array(8).fill(0).map((_, i) => {
     const left = Math.round(Math.random() * 90);
-    const size = 10 + Math.round(Math.random() * 18);
+    const size = 12 + Math.round(Math.random() * 18);
     const delay = Math.random() * 4;
     const duration = 4 + Math.random() * 3;
-    return { id: i, left, size, delay, duration };
+    // elegir alternadamente gato o sushi para variedad
+    const char = Math.random() < 0.5 ? "🐱" : "🍣";
+    return { id: i, left, size, delay, duration, char };
   });
 
   return (
     <>
-      {hearts.map((h) => (
+      {icons.map((h) => (
         <div
           key={h.id}
           className="floating-heart"
@@ -466,16 +468,18 @@ function FloatingHearts() {
             bottom: -10 - Math.random() * 10,
             width: h.size,
             height: h.size,
-            background: "linear-gradient(180deg,#ff5d8f,#ff2d6f)",
-            borderRadius: "50% 50% 0 0",
-            transform: "rotate(-45deg)",
+            transform: "rotate(0deg)",
             animationDelay: `${h.delay}s`,
             animationDuration: `${h.duration}s`,
             opacity: 0.95,
-            clipPath:
-              "polygon(50% 0%, 100% 35%, 80% 100%, 50% 80%, 20% 100%, 0% 35%)",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: Math.max(10, Math.round(h.size * 0.9)),
           }}
-        />
+        >
+          {h.char}
+        </div>
       ))}
     </>
   );
