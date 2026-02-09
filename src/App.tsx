@@ -5,6 +5,7 @@ function App() {
   const [msg, setMsg] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonsAreaRef = useRef<HTMLDivElement | null>(null);
+  // CAMBIO MÍNIMO: ref ahora apunta a HTMLDivElement porque dejamos el "No" como <div>
   const noBtnRef = useRef<HTMLDivElement | null>(null);
 
   // Posición del botón "No" (en px relativos al área de botones)
@@ -47,7 +48,7 @@ function App() {
   useEffect(() => {
     const setInitial = () => {
       const ba = buttonsAreaRef.current;
-      const btn = noBtnRef.current as HTMLDivElement | null;
+      const btn = noBtnRef.current;
       if (!ba || !btn) return;
       const rect = ba.getBoundingClientRect();
 
@@ -135,7 +136,7 @@ function App() {
   // (seguimos manteniendo la detección global por si el cursor se acerca desde otras zonas)
   const handleMouseMove = (e: React.MouseEvent) => {
     const ba = buttonsAreaRef.current;
-    const btn = noBtnRef.current as HTMLDivElement | null;
+    const btn = noBtnRef.current;
     if (!ba || !btn) return;
     const baRect = ba.getBoundingClientRect();
 
@@ -267,9 +268,8 @@ function App() {
           box-shadow: 0 6px 16px rgba(0,0,0,0.12);
           transition: transform 220ms ease, box-shadow 220ms ease;
         }
-        /* aplicar el efecto :active solamente a los botones que NO sean .btn-no */
+        /* CAMBIO MÍNIMO: aplicar efecto :active solo a botones que NO sean .btn-no */
         .btn:active:not(.btn-no) { transform: scale(0.97); }
-        .btn[disabled] { opacity: 0.6; cursor: default; transform: none; }
         .btn-yes {
           background: linear-gradient(90deg,#ff6f9a,#ff3e7a);
           color: white;
@@ -278,14 +278,10 @@ function App() {
           background: linear-gradient(90deg,#fff2f7,#ffe7ef);
           color: #8b1330;
           border: 1px solid rgba(139,19,48,0.06);
-          /* asegurarnos que el aspecto permanezca igual pero sin reacciones de "botón" */
+          /* aseguramos que no tenga reacciones visuales propias de <button> */
+          user-select: none;
         }
-        /* remover cualquier reacción visual al ser "presionado" o recibir foco */
-        .btn-no:active, .btn-no:focus {
-          transform: none !important;
-          outline: none;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-        }
+        .btn[disabled] { opacity: 0.6; cursor: default; transform: none; }
         .floating-heart {
           position: absolute;
           width: 16px; height: 16px; pointer-events: none;
@@ -374,13 +370,17 @@ function App() {
                       Yes
                     </button>
 
-                    {/* "Botón" NO convertido en un <div> para eliminar reacciones de botón */}
+                    {/* CAMBIO MÍNIMO: convertimos el \"No\" a <div> que se vea exactamente igual
+                        - quitamos onClick / disabled (no queremos reacciones de botón)
+                        - mantenemos los handlers de movimiento
+                        - mantenemos minWidth/left/top/transition para que el tamaño y posicion sean idénticos */}
                     <div
                       ref={noBtnRef}
                       className="btn btn-no"
                       // movemos en cuanto el cursor entra o se mueve sobre el elemento
                       onMouseEnter={(e) => moveNoButton(e.clientX, e.clientY)}
                       onMouseMove={(e) => moveNoButton(e.clientX, e.clientY)}
+                      // mantenemos aria-label para compatibilidad, pero NO es un botón semántico
                       aria-label="Responder no"
                       style={{
                         position: "absolute",
@@ -389,10 +389,12 @@ function App() {
                         top: noPos ? noPos.top : 12,
                         transition:
                           "left 120ms linear, top 120ms linear, transform 60ms linear",
+                        // asegurar que el <div> se mida/centre exactamente como el botón anterior
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        userSelect: "none",
+                        // preservar comportamiento de 'disabled' visual si loading: bloquear interacciones
+                        pointerEvents: loading ? "none" : "auto",
                       }}
                     >
                       No
