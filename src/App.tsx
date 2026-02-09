@@ -5,7 +5,7 @@ function App() {
   const [msg, setMsg] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonsAreaRef = useRef<HTMLDivElement | null>(null);
-  const noBtnRef = useRef<HTMLButtonElement | null>(null);
+  const noBtnRef = useRef<HTMLDivElement | null>(null);
 
   // Posición del botón "No" (en px relativos al área de botones)
   const [noPos, setNoPos] = useState<{ left: number; top: number } | null>(
@@ -47,7 +47,7 @@ function App() {
   useEffect(() => {
     const setInitial = () => {
       const ba = buttonsAreaRef.current;
-      const btn = noBtnRef.current;
+      const btn = noBtnRef.current as HTMLDivElement | null;
       if (!ba || !btn) return;
       const rect = ba.getBoundingClientRect();
 
@@ -135,7 +135,7 @@ function App() {
   // (seguimos manteniendo la detección global por si el cursor se acerca desde otras zonas)
   const handleMouseMove = (e: React.MouseEvent) => {
     const ba = buttonsAreaRef.current;
-    const btn = noBtnRef.current;
+    const btn = noBtnRef.current as HTMLDivElement | null;
     if (!ba || !btn) return;
     const baRect = ba.getBoundingClientRect();
 
@@ -267,7 +267,9 @@ function App() {
           box-shadow: 0 6px 16px rgba(0,0,0,0.12);
           transition: transform 220ms ease, box-shadow 220ms ease;
         }
-        .btn:active { transform: scale(0.97); }
+        /* aplicar el efecto :active solamente a los botones que NO sean .btn-no */
+        .btn:active:not(.btn-no) { transform: scale(0.97); }
+        .btn[disabled] { opacity: 0.6; cursor: default; transform: none; }
         .btn-yes {
           background: linear-gradient(90deg,#ff6f9a,#ff3e7a);
           color: white;
@@ -276,8 +278,14 @@ function App() {
           background: linear-gradient(90deg,#fff2f7,#ffe7ef);
           color: #8b1330;
           border: 1px solid rgba(139,19,48,0.06);
+          /* asegurarnos que el aspecto permanezca igual pero sin reacciones de "botón" */
         }
-        .btn[disabled] { opacity: 0.6; cursor: default; transform: none; }
+        /* remover cualquier reacción visual al ser "presionado" o recibir foco */
+        .btn-no:active, .btn-no:focus {
+          transform: none !important;
+          outline: none;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
         .floating-heart {
           position: absolute;
           width: 16px; height: 16px; pointer-events: none;
@@ -366,16 +374,13 @@ function App() {
                       Yes
                     </button>
 
-                    {/* Botón NO - se mueve: ahora imposible de atrapar */}
-                    <button
+                    {/* "Botón" NO convertido en un <div> para eliminar reacciones de botón */}
+                    <div
                       ref={noBtnRef}
                       className="btn btn-no"
-                      // movemos en cuanto el cursor entra o se mueve sobre el botón
+                      // movemos en cuanto el cursor entra o se mueve sobre el elemento
                       onMouseEnter={(e) => moveNoButton(e.clientX, e.clientY)}
                       onMouseMove={(e) => moveNoButton(e.clientX, e.clientY)}
-                      // seguridad extra: si alguien logra darle click, prevenimos la acción
-                      onClick={(e) => e.preventDefault()}
-                      disabled={loading}
                       aria-label="Responder no"
                       style={{
                         position: "absolute",
@@ -384,10 +389,14 @@ function App() {
                         top: noPos ? noPos.top : 12,
                         transition:
                           "left 120ms linear, top 120ms linear, transform 60ms linear",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        userSelect: "none",
                       }}
                     >
                       No
-                    </button>
+                    </div>
                   </div>
 
                   {msg && <div className="msg">{msg}</div>}
