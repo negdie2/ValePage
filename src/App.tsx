@@ -179,9 +179,13 @@ function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
         .bg {
+          /* CAMBIO MÍNIMO: asegurar que el fondo cubra TODO el viewport */
+          position: fixed;
+          inset: 0;
+          width: 100%;
+          height: 100%;
           background: radial-gradient(closest-side at 10% 10%, #fff0f6, transparent 20%),
                       linear-gradient(135deg, #ffe6f0 0%, #ffd1e8 30%, #ff9cc0 100%);
-          min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
