@@ -11,7 +11,6 @@ function App() {
   const [noPos, setNoPos] = useState<{ left: number; top: number } | null>(
     null,
   );
-  const lastMoveRef = useRef<number>(0);
 
   const enviarRespuesta = async (respuesta: "yes" | "no") => {
     setLoading(true);
@@ -62,31 +61,78 @@ function App() {
     return () => window.removeEventListener("resize", setInitial);
   }, []);
 
-  // Mover el botón "No" a una posición aleatoria dentro del área de botones (respetando márgenes)
-  const moveNoButton = () => {
-    const now = Date.now();
-    if (now - lastMoveRef.current < 120) return; // evitar movimientos demasiado frecuentes
-    lastMoveRef.current = now;
-
+  /**
+   * Mueve el botón "No".
+   * Si se pasan clientX/clientY (coordenadas del cursor en ventana),
+   * elige la posición dentro del área que maximice la distancia al cursor.
+   * Si no, usa una posición aleatoria.
+   */
+  const moveNoButton = (clientX?: number, clientY?: number) => {
     const ba = buttonsAreaRef.current;
     const btn = noBtnRef.current;
     if (!ba || !btn) return;
-    const crect = ba.getBoundingClientRect();
-    const margin = 12; // margen para que no se salga
-    const maxLeft = crect.width - btn.offsetWidth - margin;
-    const maxTop = crect.height - btn.offsetHeight - margin;
+    const areaRect = ba.getBoundingClientRect();
+    const margin = 10;
+    const btnW = btn.offsetWidth;
+    const btnH = btn.offsetHeight;
+    const maxLeft = Math.max(0, areaRect.width - btnW - margin * 2);
+    const maxTop = Math.max(0, areaRect.height - btnH - margin * 2);
 
-    const left = Math.round(
-      margin + Math.random() * Math.max(0, maxLeft - margin),
-    );
-    const top = Math.round(
-      margin + Math.random() * Math.max(0, maxTop - margin),
-    );
+    // Si tenemos coords del cursor, creamos candidatos y escogemos el que esté más lejos del cursor
+    if (typeof clientX === "number" && typeof clientY === "number") {
+      const candidates: { left: number; top: number }[] = [];
 
+      // posiciones en una grilla (esquinas + intermedias)
+      for (let i = 0; i <= 4; i++) {
+        for (let j = 0; j <= 2; j++) {
+          const left = Math.round(margin + (i / 4) * maxLeft);
+          const top = Math.round(margin + (j / 2) * maxTop);
+          candidates.push({ left, top });
+        }
+      }
+
+      // algunas posiciones aleatorias para variedad
+      for (let k = 0; k < 8; k++) {
+        candidates.push({
+          left: Math.round(margin + Math.random() * maxLeft),
+          top: Math.round(margin + Math.random() * maxTop),
+        });
+      }
+
+      // convertir client coords a coords relativas al área (centro del posible botón)
+      const toWindowCoords = (cand: { left: number; top: number }) => {
+        return {
+          x: areaRect.left + cand.left + btnW / 2,
+          y: areaRect.top + cand.top + btnH / 2,
+        };
+      };
+
+      // escoger candidato que maximice distancia al cursor
+      let best = candidates[0];
+      let bestDist = -1;
+      for (const c of candidates) {
+        const p = toWindowCoords(c);
+        const dx = p.x - clientX;
+        const dy = p.y - clientY;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d > bestDist) {
+          bestDist = d;
+          best = c;
+        }
+      }
+
+      setNoPos({ left: best.left, top: best.top });
+      return;
+    }
+
+    // si no hay coords, posición aleatoria (fallback)
+    const left = Math.round(margin + Math.random() * maxLeft);
+    const top = Math.round(margin + Math.random() * maxTop);
     setNoPos({ left, top });
   };
 
   // Detectar proximidad del mouse al botón "No" (usando coords relativas al área de botones)
+  // (seguimos manteniendo la detección global por si el cursor se acerca desde otras zonas)
   const handleMouseMove = (e: React.MouseEvent) => {
     const ba = buttonsAreaRef.current;
     const btn = noBtnRef.current;
@@ -102,32 +148,20 @@ function App() {
     const dy = e.clientY - by;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // umbral en px para que empiece a evadir
-    const THRESHOLD = 140;
+    // umbral; si está muy cerca, movemos (esto ayuda si el cursor viene desde lejos)
+    const THRESHOLD = 120;
     if (dist < THRESHOLD) {
-      moveNoButton();
+      // pasar coords para maximizar distancia
+      moveNoButton(e.clientX, e.clientY);
     }
   };
 
-  // Eventos touch: mover botón si el dedo se acerca
+  // Eventos touch: mover botón si el dedo se acerca (pasamos coords para maximizar distancia)
   useEffect(() => {
     const onTouch = (ev: TouchEvent) => {
       const touch = ev.touches[0];
       if (!touch) return;
-      const ba = buttonsAreaRef.current;
-      const btn = noBtnRef.current;
-      if (!ba || !btn) return;
-      const baRect = ba.getBoundingClientRect();
-      const bx =
-        baRect.left +
-        (noPos ? noPos.left : btn.offsetLeft) +
-        btn.offsetWidth / 2;
-      const by =
-        baRect.top + (noPos ? noPos.top : btn.offsetTop) + btn.offsetHeight / 2;
-      const dx = touch.clientX - bx;
-      const dy = touch.clientY - by;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 120) moveNoButton();
+      moveNoButton(touch.clientX, touch.clientY);
     };
     window.addEventListener("touchstart", onTouch, { passive: true });
     window.addEventListener("touchmove", onTouch, { passive: true });
@@ -135,7 +169,7 @@ function App() {
       window.removeEventListener("touchstart", onTouch);
       window.removeEventListener("touchmove", onTouch);
     };
-  }, [noPos]);
+  }, []);
 
   return (
     <div
@@ -328,11 +362,15 @@ function App() {
                       Yes
                     </button>
 
-                    {/* Botón NO - se mueve */}
+                    {/* Botón NO - se mueve: ahora imposible de atrapar */}
                     <button
                       ref={noBtnRef}
                       className="btn btn-no"
-                      onClick={() => enviarRespuesta("no")}
+                      // movemos en cuanto el cursor entra o se mueve sobre el botón
+                      onMouseEnter={(e) => moveNoButton(e.clientX, e.clientY)}
+                      onMouseMove={(e) => moveNoButton(e.clientX, e.clientY)}
+                      // seguridad extra: si alguien logra darle click, prevenimos la acción
+                      onClick={(e) => e.preventDefault()}
                       disabled={loading}
                       aria-label="Responder no"
                       style={{
@@ -341,7 +379,7 @@ function App() {
                         left: noPos ? noPos.left : "calc(50% + 40px)",
                         top: noPos ? noPos.top : 12,
                         transition:
-                          "left 220ms ease, top 220ms ease, transform 120ms ease",
+                          "left 120ms linear, top 120ms linear, transform 60ms linear",
                       }}
                     >
                       No
