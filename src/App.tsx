@@ -59,42 +59,60 @@ function App() {
     return () => window.removeEventListener("resize", setInitial);
   }, []);
 
+  /**
+   * Mueve el "No".
+   * CAMBIO MÍNIMO: ahora genera muchos más candidatos y los limita al área del `card` grande
+   * y luego convierte la posición a coordenadas relativas al `buttons-area` (donde está el <div>).
+   */
   const moveNoButton = (clientX?: number, clientY?: number) => {
     const ba = buttonsAreaRef.current;
     const btn = noBtnRef.current;
-    if (!ba || !btn) return;
-    const areaRect = ba.getBoundingClientRect();
+    const card = containerRef.current; // <-- usamos el card grande como área de movimiento
+    if (!ba || !btn || !card) return;
+
+    const cardRect = card.getBoundingClientRect();
+    const baRect = ba.getBoundingClientRect();
     const margin = 10;
     const btnW = btn.offsetWidth;
     const btnH = btn.offsetHeight;
-    const maxLeft = Math.max(0, areaRect.width - btnW - margin * 2);
-    const maxTop = Math.max(0, areaRect.height - btnH - margin * 2);
 
+    // max dentro del card (posiciones referidas al borde izquierdo/top del card)
+    const maxLeftCard = Math.max(0, cardRect.width - btnW - margin * 2);
+    const maxTopCard = Math.max(0, cardRect.height - btnH - margin * 2);
+
+    // Si tenemos coords del cursor, preferimos posiciones que maximizan distancia
     if (typeof clientX === "number" && typeof clientY === "number") {
-      const candidates: { left: number; top: number }[] = [];
+      const candidates: { leftCard: number; topCard: number }[] = [];
 
-      for (let i = 0; i <= 4; i++) {
-        for (let j = 0; j <= 2; j++) {
-          const left = Math.round(margin + (i / 4) * maxLeft);
-          const top = Math.round(margin + (j / 2) * maxTop);
-          candidates.push({ left, top });
+      // GRID más denso: 8 x 6 (muchos más puntos que antes)
+      const GRID_X = 8;
+      const GRID_Y = 6;
+      for (let i = 0; i <= GRID_X; i++) {
+        for (let j = 0; j <= GRID_Y; j++) {
+          const leftCard = Math.round(margin + (i / GRID_X) * maxLeftCard);
+          const topCard = Math.round(margin + (j / GRID_Y) * maxTopCard);
+          candidates.push({ leftCard, topCard });
         }
       }
 
-      for (let k = 0; k < 8; k++) {
+      // muchas posiciones aleatorias extras para variedad
+      const EXTRA = 32;
+      for (let k = 0; k < EXTRA; k++) {
         candidates.push({
-          left: Math.round(margin + Math.random() * maxLeft),
-          top: Math.round(margin + Math.random() * maxTop),
+          leftCard: Math.round(margin + Math.random() * maxLeftCard),
+          topCard: Math.round(margin + Math.random() * maxTopCard),
         });
       }
 
-      const toWindowCoords = (cand: { left: number; top: number }) => {
+      // convertir candidato (referido al card) a coords de ventana (centro del posible botón)
+      const toWindowCoords = (cand: { leftCard: number; topCard: number }) => {
         return {
-          x: areaRect.left + cand.left + btnW / 2,
-          y: areaRect.top + cand.top + btnH / 2,
+          x: cardRect.left + cand.leftCard + btnW / 2,
+          y: cardRect.top + cand.topCard + btnH / 2,
         };
       };
 
+      // escoger candidato que maximice distancia al cursor
       let best = candidates[0];
       let bestDist = -1;
       for (const c of candidates) {
@@ -108,13 +126,29 @@ function App() {
         }
       }
 
-      setNoPos({ left: best.left, top: best.top });
+      // convertir la posición del card a posición relativa al buttons-area
+      // leftRelative = pos_in_card - (ba.left - card.left)
+      const leftRelativeToBA = Math.round(
+        best.leftCard - (baRect.left - cardRect.left),
+      );
+      const topRelativeToBA = Math.round(
+        best.topCard - (baRect.top - cardRect.top),
+      );
+
+      setNoPos({ left: leftRelativeToBA, top: topRelativeToBA });
       return;
     }
 
-    const left = Math.round(margin + Math.random() * maxLeft);
-    const top = Math.round(margin + Math.random() * maxTop);
-    setNoPos({ left, top });
+    // fallback: posición aleatoria dentro del card
+    const leftCard = Math.round(margin + Math.random() * maxLeftCard);
+    const topCard = Math.round(margin + Math.random() * maxTopCard);
+
+    const leftRelativeToBA = Math.round(
+      leftCard - (baRect.left - cardRect.left),
+    );
+    const topRelativeToBA = Math.round(topCard - (baRect.top - cardRect.top));
+
+    setNoPos({ left: leftRelativeToBA, top: topRelativeToBA });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -267,11 +301,9 @@ function App() {
           -webkit-touch-callout: none;
           outline: none;
           transform: none !important;
-          /* mantengo la sombra igual que antes para que el aspecto no cambie */
           box-shadow: 0 6px 16px rgba(0,0,0,0.12);
         }
 
-        /* Asegurar que :active / :focus no cambien nada para .btn-no */
         .btn-no:active, .btn-no:focus, .btn-no:focus-visible {
           transform: none !important;
           outline: none !important;
@@ -368,18 +400,13 @@ function App() {
                       Yes
                     </button>
 
-                    {/* CAMBIO MÍNIMO: NO es un <button> — es un <div> visualmente idéntico.
-                        Responderá a onMouseEnter/onMouseMove para escapar y además a onMouseDown
-                        para que cuando el usuario haga click/tap, se mueva antes de cualquier
-                        efecto visual. No hay handlers que produzcan reacciones visuales. */}
+                    {/* NO como <div> (sin reacciones visuales) */}
                     <div
                       ref={noBtnRef}
                       className="btn btn-no"
                       onMouseEnter={(e) => moveNoButton(e.clientX, e.clientY)}
                       onMouseMove={(e) => moveNoButton(e.clientX, e.clientY)}
                       onMouseDown={(e) => {
-                        // movemos al intentar presionar (escape inmediato)
-                        // CAMBIO MÍNIMO: prevenir selección accidental
                         e.preventDefault();
                         moveNoButton(e.clientX, e.clientY);
                       }}
@@ -394,7 +421,6 @@ function App() {
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        // si loading, bloqueamos interacción igual que antes
                         pointerEvents: loading ? "none" : "auto",
                         userSelect: "none",
                       }}
