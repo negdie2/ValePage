@@ -8,6 +8,10 @@ function App() {
   // CAMBIO MÍNIMO: ref ahora apunta a HTMLDivElement porque el "No" será <div>
   const noBtnRef = useRef<HTMLDivElement | null>(null);
 
+  // CAMBIO MÍNIMO: ref para el botón YES para medir su ancho exacto
+  const yesBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [noWidth, setNoWidth] = useState<number | null>(null);
+
   const [noPos, setNoPos] = useState<{ left: number; top: number } | null>(
     null,
   );
@@ -47,8 +51,15 @@ function App() {
     const setInitial = () => {
       const ba = buttonsAreaRef.current;
       const btn = noBtnRef.current;
+      const yesBtn = yesBtnRef.current;
       if (!ba || !btn) return;
       const rect = ba.getBoundingClientRect();
+
+      // Medir ancho del botón YES (mínimo cambio para igualar tamaño)
+      if (yesBtn) {
+        const w = yesBtn.offsetWidth;
+        setNoWidth(w);
+      }
 
       const left = Math.round(rect.width * 0.65 - btn.offsetWidth / 2);
       const top = Math.round(rect.height * 0.25);
@@ -61,13 +72,13 @@ function App() {
 
   /**
    * Mueve el "No".
-   * CAMBIO MÍNIMO: ahora genera muchos más candidatos y los limita al área del `card` grande
-   * y luego convierte la posición a coordenadas relativas al `buttons-area` (donde está el <div>).
+   * CAMBIO MÍNIMO: ahora genera muchos candidatos dentro del `card` grande,
+   * filtra los que estén suficientemente lejos del cursor y elige uno al azar.
    */
   const moveNoButton = (clientX?: number, clientY?: number) => {
     const ba = buttonsAreaRef.current;
     const btn = noBtnRef.current;
-    const card = containerRef.current; // <-- usamos el card grande como área de movimiento
+    const card = containerRef.current; // usamos el card grande como área de movimiento
     if (!ba || !btn || !card) return;
 
     const cardRect = card.getBoundingClientRect();
@@ -80,59 +91,47 @@ function App() {
     const maxLeftCard = Math.max(0, cardRect.width - btnW - margin * 2);
     const maxTopCard = Math.max(0, cardRect.height - btnH - margin * 2);
 
-    // Si tenemos coords del cursor, preferimos posiciones que maximizan distancia
+    // GENERAR muchos candidatos dentro del card
+    const candidates: { leftCard: number; topCard: number }[] = [];
+    const GRID_X = 10; // más densidad
+    const GRID_Y = 7;
+    for (let i = 0; i <= GRID_X; i++) {
+      for (let j = 0; j <= GRID_Y; j++) {
+        const leftCard = Math.round(margin + (i / GRID_X) * maxLeftCard);
+        const topCard = Math.round(margin + (j / GRID_Y) * maxTopCard);
+        candidates.push({ leftCard, topCard });
+      }
+    }
+    const EXTRA = 60; // muchas posiciones aleatorias extra
+    for (let k = 0; k < EXTRA; k++) {
+      candidates.push({
+        leftCard: Math.round(margin + Math.random() * maxLeftCard),
+        topCard: Math.round(margin + Math.random() * maxTopCard),
+      });
+    }
+
+    // Si tenemos coords del cursor, filtramos los candidatos que queden suficientemente lejos
     if (typeof clientX === "number" && typeof clientY === "number") {
-      const candidates: { leftCard: number; topCard: number }[] = [];
-
-      // GRID más denso: 8 x 6 (muchos más puntos que antes)
-      const GRID_X = 8;
-      const GRID_Y = 6;
-      for (let i = 0; i <= GRID_X; i++) {
-        for (let j = 0; j <= GRID_Y; j++) {
-          const leftCard = Math.round(margin + (i / GRID_X) * maxLeftCard);
-          const topCard = Math.round(margin + (j / GRID_Y) * maxTopCard);
-          candidates.push({ leftCard, topCard });
-        }
-      }
-
-      // muchas posiciones aleatorias extras para variedad
-      const EXTRA = 32;
-      for (let k = 0; k < EXTRA; k++) {
-        candidates.push({
-          leftCard: Math.round(margin + Math.random() * maxLeftCard),
-          topCard: Math.round(margin + Math.random() * maxTopCard),
-        });
-      }
-
-      // convertir candidato (referido al card) a coords de ventana (centro del posible botón)
-      const toWindowCoords = (cand: { leftCard: number; topCard: number }) => {
-        return {
-          x: cardRect.left + cand.leftCard + btnW / 2,
-          y: cardRect.top + cand.topCard + btnH / 2,
-        };
-      };
-
-      // escoger candidato que maximice distancia al cursor
-      let best = candidates[0];
-      let bestDist = -1;
-      for (const c of candidates) {
-        const p = toWindowCoords(c);
-        const dx = p.x - clientX;
-        const dy = p.y - clientY;
+      const MIN_DIST = 100; // distancia mínima en px al cursor (tú puedes ajustar)
+      const farEnough = candidates.filter((c) => {
+        const cx = cardRect.left + c.leftCard + btnW / 2;
+        const cy = cardRect.top + c.topCard + btnH / 2;
+        const dx = cx - clientX;
+        const dy = cy - clientY;
         const d = Math.sqrt(dx * dx + dy * dy);
-        if (d > bestDist) {
-          bestDist = d;
-          best = c;
-        }
-      }
+        return d >= MIN_DIST;
+      });
+
+      const pool = farEnough.length > 0 ? farEnough : candidates;
+      // elegimos **uno al azar** entre el pool para aumentar variedad
+      const pick = pool[Math.floor(Math.random() * pool.length)];
 
       // convertir la posición del card a posición relativa al buttons-area
-      // leftRelative = pos_in_card - (ba.left - card.left)
       const leftRelativeToBA = Math.round(
-        best.leftCard - (baRect.left - cardRect.left),
+        pick.leftCard - (baRect.left - cardRect.left),
       );
       const topRelativeToBA = Math.round(
-        best.topCard - (baRect.top - cardRect.top),
+        pick.topCard - (baRect.top - cardRect.top),
       );
 
       setNoPos({ left: leftRelativeToBA, top: topRelativeToBA });
@@ -279,6 +278,7 @@ function App() {
           font-size: 16px;
           box-shadow: 0 6px 16px rgba(0,0,0,0.12);
           transition: transform 220ms ease, box-shadow 220ms ease;
+          box-sizing: border-box; /* asegurar misma caja para ambos */
         }
         /* CAMBIO MÍNIMO: efecto :active solo a botones que NO sean .btn-no */
         .btn:active:not(.btn-no) { transform: scale(0.97); }
@@ -385,6 +385,7 @@ function App() {
                   >
                     {/* Botón YES - fijo */}
                     <button
+                      ref={yesBtnRef} /* CAMBIO MÍNIMO: medir ancho */
                       className="btn btn-yes"
                       onClick={() => enviarRespuesta("yes")}
                       disabled={loading}
@@ -413,6 +414,8 @@ function App() {
                       aria-label="Responder no"
                       style={{
                         position: "absolute",
+                        // CAMBIO MÍNIMO: usar width exacto del botón YES si está disponible
+                        width: noWidth ? `${noWidth}px` : undefined,
                         minWidth: 120,
                         left: noPos ? noPos.left : "calc(50% + 40px)",
                         top: noPos ? noPos.top : 12,
