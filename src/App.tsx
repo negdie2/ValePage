@@ -362,9 +362,10 @@ function App() {
                 <div className="heart" />
               </div>
 
-              <h1 className="title">¿Serías mi San Valentine?</h1>
+              <h1 className="title">Para la abogada mas bella</h1>
               <p className="subtitle">
-                Un momento bonito necesita una decisión atrevida 💘
+                Se que no podremos vernos pero... pensaba en fingir que el
+                viernes es 14 👉👈 jeje
               </p>
 
               <div className="panel">
@@ -374,8 +375,7 @@ function App() {
                   aria-label="Tarjeta de San Valentín"
                 >
                   <div style={{ fontSize: 16, color: "#6b1630" }}>
-                    Haz clic en la respuesta que sientas... si sobrevives al
-                    botón travieso 😉
+                    Que dices? 😉
                   </div>
 
                   <div
