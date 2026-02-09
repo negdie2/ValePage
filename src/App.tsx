@@ -5,13 +5,9 @@ function App() {
   const [msg, setMsg] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonsAreaRef = useRef<HTMLDivElement | null>(null);
-  // CAMBIO MÍNIMO: ref ahora apunta a HTMLDivElement porque el "No" será <div>
   const noBtnRef = useRef<HTMLDivElement | null>(null);
-
-  // CAMBIO MÍNIMO: ref para el botón YES para medir su ancho exacto
   const yesBtnRef = useRef<HTMLButtonElement | null>(null);
   const [noWidth, setNoWidth] = useState<number | null>(null);
-
   const [noPos, setNoPos] = useState<{ left: number; top: number } | null>(
     null,
   );
@@ -35,9 +31,7 @@ function App() {
         },
       );
 
-      if (!res.ok) {
-        throw new Error("Error al guardar");
-      }
+      if (!res.ok) throw new Error("Error al guardar");
 
       setMsg("Respuesta guardada correctamente 💌");
     } catch (err) {
@@ -55,11 +49,7 @@ function App() {
       if (!ba || !btn) return;
       const rect = ba.getBoundingClientRect();
 
-      // Medir ancho del botón YES (mínimo cambio para igualar tamaño)
-      if (yesBtn) {
-        const w = yesBtn.offsetWidth;
-        setNoWidth(w);
-      }
+      if (yesBtn) setNoWidth(yesBtn.offsetWidth);
 
       const left = Math.round(rect.width * 0.65 - btn.offsetWidth / 2);
       const top = Math.round(rect.height * 0.25);
@@ -70,15 +60,10 @@ function App() {
     return () => window.removeEventListener("resize", setInitial);
   }, []);
 
-  /**
-   * Mueve el "No".
-   * CAMBIO MÍNIMO: ahora genera muchos candidatos dentro del `card` grande,
-   * filtra los que estén suficientemente lejos del cursor y elige uno al azar.
-   */
   const moveNoButton = (clientX?: number, clientY?: number) => {
     const ba = buttonsAreaRef.current;
     const btn = noBtnRef.current;
-    const card = containerRef.current; // usamos el card grande como área de movimiento
+    const card = containerRef.current;
     if (!ba || !btn || !card) return;
 
     const cardRect = card.getBoundingClientRect();
@@ -87,13 +72,11 @@ function App() {
     const btnW = btn.offsetWidth;
     const btnH = btn.offsetHeight;
 
-    // max dentro del card (posiciones referidas al borde izquierdo/top del card)
     const maxLeftCard = Math.max(0, cardRect.width - btnW - margin * 2);
     const maxTopCard = Math.max(0, cardRect.height - btnH - margin * 2);
 
-    // GENERAR muchos candidatos dentro del card
     const candidates: { leftCard: number; topCard: number }[] = [];
-    const GRID_X = 10; // más densidad
+    const GRID_X = 10;
     const GRID_Y = 7;
     for (let i = 0; i <= GRID_X; i++) {
       for (let j = 0; j <= GRID_Y; j++) {
@@ -102,7 +85,7 @@ function App() {
         candidates.push({ leftCard, topCard });
       }
     }
-    const EXTRA = 60; // muchas posiciones aleatorias extra
+    const EXTRA = 60;
     for (let k = 0; k < EXTRA; k++) {
       candidates.push({
         leftCard: Math.round(margin + Math.random() * maxLeftCard),
@@ -110,9 +93,8 @@ function App() {
       });
     }
 
-    // Si tenemos coords del cursor, filtramos los candidatos que queden suficientemente lejos
     if (typeof clientX === "number" && typeof clientY === "number") {
-      const MIN_DIST = 100; // distancia mínima en px al cursor (tú puedes ajustar)
+      const MIN_DIST = 100;
       const farEnough = candidates.filter((c) => {
         const cx = cardRect.left + c.leftCard + btnW / 2;
         const cy = cardRect.top + c.topCard + btnH / 2;
@@ -123,10 +105,8 @@ function App() {
       });
 
       const pool = farEnough.length > 0 ? farEnough : candidates;
-      // elegimos **uno al azar** entre el pool para aumentar variedad
       const pick = pool[Math.floor(Math.random() * pool.length)];
 
-      // convertir la posición del card a posición relativa al buttons-area
       const leftRelativeToBA = Math.round(
         pick.leftCard - (baRect.left - cardRect.left),
       );
@@ -138,7 +118,6 @@ function App() {
       return;
     }
 
-    // fallback: posición aleatoria dentro del card
     const leftCard = Math.round(margin + Math.random() * maxLeftCard);
     const topCard = Math.round(margin + Math.random() * maxTopCard);
 
@@ -165,9 +144,7 @@ function App() {
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     const THRESHOLD = 120;
-    if (dist < THRESHOLD) {
-      moveNoButton(e.clientX, e.clientY);
-    }
+    if (dist < THRESHOLD) moveNoButton(e.clientX, e.clientY);
   };
 
   useEffect(() => {
@@ -188,17 +165,16 @@ function App() {
     <div
       style={{ minHeight: "100vh", fontFamily: "'Poppins', Arial, sans-serif" }}
     >
-      {/* Estilos locales */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
-        /* DISEÑO: temática gatitos + sushi (cambios mínimos visuales) */
         .bg {
+          /* volver a la paleta rosada original */
           position: fixed;
           inset: 0;
           width: 100%;
           height: 100%;
-          /* fondo más neutro y "pantalla" temática: suave beige + verde sushi */
-          background: linear-gradient(180deg, #f6f3ef 0%, #e8f8f2 50%, #f6f3ef 100%);
+          background: radial-gradient(closest-side at 10% 10%, #fff0f6, transparent 20%),
+                      linear-gradient(135deg, #ffe6f0 0%, #ffd1e8 30%, #ff9cc0 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -209,9 +185,9 @@ function App() {
         .card {
           width: 100%;
           max-width: 920px;
-          background: rgba(255,255,255,0.96); /* un poquito más blanco para contraste */
+          background: rgba(255,255,255,0.85);
           border-radius: 22px;
-          box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.12);
           padding: 44px 36px;
           position: relative;
           overflow: hidden;
@@ -222,26 +198,33 @@ function App() {
           font-weight: 800;
           letter-spacing: -0.02em;
           margin: 6px 0 8px;
-          color: #2b3a2b; /* tono más natural */
+          color: #9a0839;
           text-shadow: 0 1px 0 rgba(255,255,255,0.6);
         }
         .subtitle {
           text-align: center;
           font-size: 18px;
           margin-bottom: 28px;
-          color: #4a5a4a;
-          opacity: 0.95;
+          color: #6b1630;
+          opacity: 0.9;
         }
         .heart-row {
           display:flex; gap:10px; justify-content:center; margin-bottom: 20px;
         }
-        /* sustituimos .heart por .icon que mostrará emoji (gatito/sushi) */
-        .icon {
-          font-size: 24px;
-          line-height: 1;
-          transform: rotate(0deg);
+        .icon, .heart {
+          width: 24px; height: 24px; transform: rotate(-45deg);
           position: relative;
         }
+        .heart:before, .heart:after {
+          content: "";
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: linear-gradient(180deg,#ff5d8f,#ff2d6f);
+          position: absolute;
+        }
+        .heart:before { top: -12px; left: 0; }
+        .heart:after { left: 12px; top: 0; }
         .panel {
           position: relative;
           height: 320px;
@@ -255,8 +238,8 @@ function App() {
           text-align: center;
           padding: 28px;
           border-radius: 14px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(249,255,250,0.95));
-          box-shadow: 0 6px 18px rgba(60,80,60,0.04);
+          background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
+          box-shadow: 0 6px 18px rgba(155,10,60,0.08);
         }
         .buttons-area {
           position: relative;
@@ -270,24 +253,19 @@ function App() {
           font-weight: 700;
           cursor: pointer;
           font-size: 16px;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+          box-shadow: 0 6px 16px rgba(0,0,0,0.12);
           transition: transform 220ms ease, box-shadow 220ms ease;
-          box-sizing: border-box; /* asegurar misma caja para ambos */
+          box-sizing: border-box;
         }
-        /* CAMBIO MÍNIMO: efecto :active solo a botones que NO sean .btn-no */
         .btn:active:not(.btn-no) { transform: scale(0.97); }
-
         .btn-yes {
-          background: linear-gradient(90deg,#7bd389,#3fb36f);
+          background: linear-gradient(90deg,#ff6f9a,#ff3e7a);
           color: white;
         }
-
         .btn-no {
-          background: linear-gradient(90deg,#fffefc,#fffdf6);
-          color: #2b3a2b;
-          border: 1px solid rgba(43,58,43,0.06);
-
-          /* CAMBIO MÍNIMO importante: evitar cualquier reacción visual al tocar/press */
+          background: linear-gradient(90deg,#fff2f7,#ffe7ef);
+          color: #8b1330;
+          border: 1px solid rgba(139,19,48,0.06);
           -webkit-tap-highlight-color: transparent;
           -webkit-user-select: none;
           -ms-user-select: none;
@@ -295,69 +273,47 @@ function App() {
           -webkit-touch-callout: none;
           outline: none;
           transform: none !important;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+          box-shadow: 0 6px 16px rgba(0,0,0,0.12);
         }
-
         .btn-no:active, .btn-no:focus, .btn-no:focus-visible {
           transform: none !important;
           outline: none !important;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important;
-          background: linear-gradient(90deg,#fffefc,#fffdf6) !important;
-          color: #2b3a2b !important;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.12) !important;
+          background: linear-gradient(90deg,#fff2f7,#ffe7ef) !important;
+          color: #8b1330 !important;
         }
-
         .btn[disabled] { opacity: 0.6; cursor: default; transform: none; }
         .floating-heart {
           position: absolute;
           width: 16px; height: 16px; pointer-events: none;
-          transform: rotate(0deg);
+          transform: rotate(-45deg);
           animation: floatUp 5s linear infinite;
           display: inline-flex; align-items:center; justify-content:center;
           font-size: 14px;
         }
         @keyframes floatUp {
-          0% { transform: translateY(20px) scale(0.8); opacity: 0.95; }
-          100% { transform: translateY(-140px) scale(1.05); opacity: 0; }
+          0% { transform: translateY(20px) scale(0.8) rotate(-45deg); opacity: 0.95; }
+          100% { transform: translateY(-140px) scale(1.05) rotate(-45deg); opacity: 0; }
         }
-        .msg { text-align:center; margin-top: 16px; color:#4a5a4a; font-weight:600; }
+        .msg { text-align:center; margin-top: 16px; color:#6b1630; font-weight:600; }
       `}</style>
 
       <div className="bg">
         <div className="card" ref={containerRef} onMouseMove={handleMouseMove}>
-          {/* ICONOS decorativos: gato arriba-izquierda y sushi abajo-derecha */}
-          <div
-            style={{
-              position: "absolute",
-              left: 20,
-              top: 10,
-              opacity: 0.95,
-              fontSize: 28,
-            }}
-            aria-hidden
-          >
-            <div className="icon">🐱</div>
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              right: 20,
-              bottom: 18,
-              opacity: 0.95,
-              fontSize: 28,
-            }}
-          >
-            <div className="icon">🍣</div>
-          </div>
-
           <div style={{ display: "flex", justifyContent: "center" }}>
             <div style={{ width: "100%", maxWidth: 780 }}>
               <div className="heart-row" aria-hidden>
                 <div className="icon">🐱</div>
                 <div className="icon" style={{ transform: "scale(1.1)" }}>
-                  🍣
+                  🍱
                 </div>
                 <div className="icon">🐱</div>
+                <div
+                  className="icon"
+                  style={{ fontSize: 22, transform: "translateY(1px)" }}
+                >
+                  🐈‍⬛
+                </div>
               </div>
 
               <h1 className="title">¿San Valentine?</h1>
@@ -372,7 +328,7 @@ function App() {
                   role="region"
                   aria-label="Tarjeta de San Valentín"
                 >
-                  <div style={{ fontSize: 16, color: "#4a5a4a" }}>
+                  <div style={{ fontSize: 16, color: "#5a5a62" }}>
                     Que dices? 😉
                   </div>
 
@@ -381,9 +337,8 @@ function App() {
                     ref={buttonsAreaRef}
                     aria-hidden={false}
                   >
-                    {/* Botón YES - fijo */}
                     <button
-                      ref={yesBtnRef} /* CAMBIO MÍNIMO: medir ancho */
+                      ref={yesBtnRef}
                       className="btn btn-yes"
                       onClick={() => enviarRespuesta("yes")}
                       disabled={loading}
@@ -399,7 +354,6 @@ function App() {
                       Yes
                     </button>
 
-                    {/* NO como <div> (sin reacciones visuales) */}
                     <div
                       ref={noBtnRef}
                       className="btn btn-no"
@@ -412,7 +366,6 @@ function App() {
                       aria-label="Responder no"
                       style={{
                         position: "absolute",
-                        // CAMBIO MÍNIMO: usar width exacto del botón YES si está disponible
                         width: noWidth ? `${noWidth}px` : undefined,
                         minWidth: 120,
                         left: noPos ? noPos.left : "calc(50% + 40px)",
@@ -435,53 +388,9 @@ function App() {
               </div>
             </div>
           </div>
-
-          {/* pequeñas partículas / iconos que flotan (gatitos y sushi) */}
-          <FloatingHearts />
         </div>
       </div>
     </div>
-  );
-}
-
-/** Pequeño componente que genera iconos flotando (gatitos/sushi) */
-function FloatingHearts() {
-  // generar posiciones y retrasos para varios iconos
-  const icons = new Array(8).fill(0).map((_, i) => {
-    const left = Math.round(Math.random() * 90);
-    const size = 12 + Math.round(Math.random() * 18);
-    const delay = Math.random() * 4;
-    const duration = 4 + Math.random() * 3;
-    // elegir alternadamente gato o sushi para variedad
-    const char = Math.random() < 0.5 ? "🐱" : "🍣";
-    return { id: i, left, size, delay, duration, char };
-  });
-
-  return (
-    <>
-      {icons.map((h) => (
-        <div
-          key={h.id}
-          className="floating-heart"
-          style={{
-            left: `${h.left}%`,
-            bottom: -10 - Math.random() * 10,
-            width: h.size,
-            height: h.size,
-            transform: "rotate(0deg)",
-            animationDelay: `${h.delay}s`,
-            animationDuration: `${h.duration}s`,
-            opacity: 0.95,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: Math.max(10, Math.round(h.size * 0.9)),
-          }}
-        >
-          {h.char}
-        </div>
-      ))}
-    </>
   );
 }
 
