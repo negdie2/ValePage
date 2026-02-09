@@ -362,10 +362,10 @@ function App() {
                 <div className="heart" />
               </div>
 
-              <h1 className="title">Para la abogada mas bella</h1>
+              <h1 className="title">¿San Valentine?</h1>
               <p className="subtitle">
-                Se que no podremos vernos pero... pensaba en fingir que el
-                viernes es 14 👉👈 jeje
+                Se que el 14 no podremos vernos pero... pensaba que podiamos
+                fingir que el viernes es 14 👉👈 jeje
               </p>
 
               <div className="panel">
