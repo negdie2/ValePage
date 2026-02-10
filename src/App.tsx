@@ -98,7 +98,7 @@ function App() {
           setImgIdx((prevIdx) => (prevIdx + 1) % imagePaths.length);
           // liberar el timer ref
           popupTimerRef.current = null;
-        }, 5000);
+        }, 3000);
 
         return 0; // reset contador
       }
@@ -372,9 +372,9 @@ function App() {
           box-sizing: border-box;
         }
 
-        /* El img tendrá la misma altura que el wrapper y ancho auto (mantiene proporción, no recorta) */
+        /* El img tendrá el 60% de la altura del wrapper (aprox 60% del tamaño actual) */
         .popup-img {
-          height: 100%;
+          height: 60%;
           width: auto;
           object-fit: contain; /* mostrar completa, sin recortar */
           display: block;
