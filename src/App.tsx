@@ -35,6 +35,9 @@ function App() {
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrAvagfS-VpALOhOYqU32Hac3tFNOuxCVMyw&s";
   const [showYesPopup, setShowYesPopup] = useState<boolean>(false);
 
+  // >>> CAMBIO MÍNIMO: estado para controlar la posición inicial del botón YES
+  const [yesLeft, setYesLeft] = useState<string>("calc(50% - 160px)");
+
   const enviarRespuesta = async (respuesta: "yes" | "no") => {
     setLoading(true);
     setMsg(null);
@@ -81,7 +84,21 @@ function App() {
 
       const left = Math.round(rect.width * 0.65 - btn.offsetWidth / 2);
       const top = Math.round(rect.height * 0.25);
-      setNoPos({ left: Math.max(8, left), top: Math.max(6, top) });
+
+      // >>> CAMBIO MÍNIMO: si es pantalla pequeña, centramos y acercamos botones
+      if (window.innerWidth <= 520) {
+        // posición inicial del YES (más pegado al centro)
+        setYesLeft("calc(50% - 110px)");
+        // posición inicial del NO (cerca del YES, centrado en el área)
+        const noLeftNum = Math.round(
+          rect.width * 0.5 - btn.offsetWidth / 2 + 30,
+        );
+        setNoPos({ left: Math.max(8, noLeftNum), top: Math.max(6, top) });
+      } else {
+        // comportamiento normal en desktop
+        setYesLeft("calc(50% - 160px)");
+        setNoPos({ left: Math.max(8, left), top: Math.max(6, top) });
+      }
     };
     setInitial();
     window.addEventListener("resize", setInitial);
@@ -400,21 +417,6 @@ function App() {
           text-align: center;
         }
 
-        /* >>> CAMBIO MÍNIMO: ajustar posición inicial de botones en móviles */
-        @media (max-width: 520px) {
-          /* acercar y centrar los botones para que no se salgan del borde */
-          .btn-yes {
-            left: calc(50% - 110px) !important;
-            top: 12px !important;
-            transform: none !important;
-          }
-          .btn-no {
-            left: calc(50% - 10px) !important;
-            top: 12px !important;
-            transform: none !important;
-          }
-        }
-
         .msg { text-align:center; margin-top: 16px; color:#6b1630; font-weight:600; }
       `}</style>
 
@@ -427,9 +429,7 @@ function App() {
                 <div className="icon" style={{ transform: "scale(1.1)" }}>
                   🍱
                 </div>
-                <div className="icon" style={{ transform: "scale(1.1)" }}>
-                  🍱
-                </div>
+                <div className="icon">🐱</div>
                 <div
                   className="icon"
                   style={{ fontSize: 22, transform: "translateY(1px)" }}
@@ -466,7 +466,7 @@ function App() {
                       disabled={loading}
                       style={{
                         position: "absolute",
-                        left: "calc(50% - 160px)",
+                        left: yesLeft,
                         top: 12,
                         transform: "translateX(-0%)",
                         minWidth: 120,
