@@ -13,7 +13,11 @@ function App() {
   );
 
   // --- NUEVO: contador de escapes y popup de imágenes ---
-  const ESCAPE_THRESHOLD = 30; // cuando el "No" se escape 30 veces mostramos imagen
+  // >>> CAMBIO MÍNIMO: ahora ESCAPE_THRESHOLD es estado para poder ajustarlo en mobile
+  const [ESCAPE_THRESHOLD, setEscapeThreshold] = useState<number>(
+    window.innerWidth <= 520 ? 15 : 30,
+  );
+
   const imagePaths = [
     "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcT_-bMBrCvjJEJIElcdHgvlvp7fnH5lxUo0wsPGbnhf4y0DYiS5",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT4GrI7kVfq7hVvAJlW2czaRzXX-G2Q0HcqaA&s",
@@ -35,7 +39,7 @@ function App() {
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrAvagfS-VpALOhOYqU32Hac3tFNOuxCVMyw&s";
   const [showYesPopup, setShowYesPopup] = useState<boolean>(false);
 
-  // >>> CAMBIO MÍNIMO: estado para controlar la posición inicial del botón YES
+  // estado para controlar la posición inicial del botón YES
   const [yesLeft, setYesLeft] = useState<string>("calc(50% - 160px)");
 
   const enviarRespuesta = async (respuesta: "yes" | "no") => {
@@ -85,19 +89,19 @@ function App() {
       const left = Math.round(rect.width * 0.65 - btn.offsetWidth / 2);
       const top = Math.round(rect.height * 0.25);
 
-      // >>> CAMBIO MÍNIMO: si es pantalla pequeña, centramos y acercamos botones
+      // si es pantalla pequeña, centramos y acercamos botones y ajustamos el threshold
       if (window.innerWidth <= 520) {
-        // posición inicial del YES (más pegado al centro)
         setYesLeft("calc(50% - 110px)");
-        // posición inicial del NO (cerca del YES, centrado en el área)
         const noLeftNum = Math.round(
           rect.width * 0.5 - btn.offsetWidth / 2 + 30,
         );
         setNoPos({ left: Math.max(8, noLeftNum), top: Math.max(6, top) });
+        setEscapeThreshold(15); // <<< cambio mínimo: threshold más bajo en mobile
       } else {
         // comportamiento normal en desktop
         setYesLeft("calc(50% - 160px)");
         setNoPos({ left: Math.max(8, left), top: Math.max(6, top) });
+        setEscapeThreshold(30);
       }
     };
     setInitial();
