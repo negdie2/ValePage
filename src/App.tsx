@@ -258,14 +258,14 @@ function App() {
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
-        /* volver a la paleta rosada original */
+        /* volver a la paleta morada */
         .bg {
           position: fixed;
           inset: 0;
           width: 100%;
           height: 100%;
-          background: radial-gradient(closest-side at 10% 10%, #fff0f6, transparent 20%),
-                      linear-gradient(135deg, #ffe6f0 0%, #ffd1e8 30%, #ff9cc0 100%);
+          background: radial-gradient(closest-side at 10% 10%, #d6b3ff, transparent 20%),
+                      linear-gradient(135deg, #d6b3ff 0%, #d6b3ff 30%, #7a4dbd 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -276,9 +276,9 @@ function App() {
         .card {
           width: 100%;
           max-width: 920px;
-          background: rgba(255,255,255,0.85);
+          background: rgba(255,255,255,0.9);
           border-radius: 22px;
-          box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+          box-shadow: 0 12px 40px rgba(122,77,189,0.12);
           padding: 44px 36px;
           position: relative;
           overflow: hidden;
@@ -289,14 +289,14 @@ function App() {
           font-weight: 800;
           letter-spacing: -0.02em;
           margin: 6px 0 8px;
-          color: #9a0839;
+          color: #4b0f5a;
           text-shadow: 0 1px 0 rgba(255,255,255,0.6);
         }
         .subtitle {
           text-align: center;
           font-size: 18px;
           margin-bottom: 28px;
-          color: #6b1630;
+          color: #5a2a61;
           opacity: 0.9;
         }
         .heart-row {
@@ -311,7 +311,7 @@ function App() {
           width: 24px;
           height: 24px;
           border-radius: 50%;
-          background: linear-gradient(180deg,#ff5d8f,#ff2d6f);
+          background: linear-gradient(180deg,#b76bff,#6b2abf);
           position: absolute;
         }
         .heart:before { top: -12px; left: 0; }
@@ -329,8 +329,8 @@ function App() {
           text-align: center;
           padding: 28px;
           border-radius: 14px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
-          box-shadow: 0 6px 18px rgba(155,10,60,0.08);
+          background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.78));
+          box-shadow: 0 6px 18px rgba(122,77,189,0.06);
         }
         .buttons-area {
           position: relative;
@@ -350,13 +350,13 @@ function App() {
         }
         .btn:active:not(.btn-no) { transform: scale(0.97); }
         .btn-yes {
-          background: linear-gradient(90deg,#ff6f9a,#ff3e7a);
+          background: linear-gradient(90deg,#a463ff,#6c2bd6);
           color: white;
         }
         .btn-no {
-          background: linear-gradient(90deg,#fff2f7,#ffe7ef);
-          color: #8b1330;
-          border: 1px solid rgba(139,19,48,0.06);
+          background: linear-gradient(90deg,#fbf3ff,#f5e8ff);
+          color: #5a2a61;
+          border: 1px solid rgba(90,42,97,0.06);
           -webkit-tap-highlight-color: transparent;
           -webkit-user-select: none;
           -ms-user-select: none;
@@ -364,14 +364,14 @@ function App() {
           -webkit-touch-callout: none;
           outline: none;
           transform: none !important;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+          box-shadow: 0 6px 16px rgba(0,0,0,0.08);
         }
         .btn-no:active, .btn-no:focus, .btn-no:focus-visible {
           transform: none !important;
           outline: none !important;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.12) !important;
-          background: linear-gradient(90deg,#fff2f7,#ffe7ef) !important;
-          color: #8b1330 !important;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important;
+          background: linear-gradient(90deg,#fbf3ff,#f5e8ff) !important;
+          color: #5a2a61 !important;
         }
         .btn[disabled] { opacity: 0.6; cursor: default; transform: none; }
 
@@ -383,7 +383,7 @@ function App() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          background: rgba(0,0,0,0.45);
+          background: rgba(60,10,80,0.45);
           z-index: 2000;
           padding: 20px;
           box-sizing: border-box;
@@ -417,11 +417,11 @@ function App() {
           color: #fff;
           font-weight: 700;
           font-size: 18px;
-          text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+          text-shadow: 0 2px 10px rgba(0,0,0,0.5);
           text-align: center;
         }
 
-        .msg { text-align:center; margin-top: 16px; color:#6b1630; font-weight:600; }
+        .msg { text-align:center; margin-top: 16px; color:#5a2a61; font-weight:600; }
       `}</style>
 
       <div className="bg">
@@ -455,7 +455,7 @@ function App() {
                   role="region"
                   aria-label="Tarjeta de San Valentín"
                 >
-                  <div style={{ fontSize: 16, color: "#6b1630" }}>
+                  <div style={{ fontSize: 16, color: "#5a2a61" }}>
                     Que dices? 😉
                   </div>
 
