@@ -63,10 +63,9 @@ function App() {
 
       if (!res.ok) throw new Error("Error al guardar");
 
-      setMsg("Respuesta guardada correctamente 💌");
-
       // si es "yes", mostrar el popup persistente adicional
       if (respuesta === "yes") {
+        setMsg("Respuesta guardada correctamente 💌");
         setShowYesPopup(true);
       }
     } catch (err) {
