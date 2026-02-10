@@ -30,6 +30,11 @@ function App() {
   const [, setEscapeCount] = useState<number>(0);
   const popupTimerRef = useRef<number | null>(null); // para controlar el timeout del popup
 
+  // --- Nuevo: popup persistente que aparece al presionar YES ---
+  const yesPopupImage =
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrAvagfS-VpALOhOYqU32Hac3tFNOuxCVMyw&s";
+  const [showYesPopup, setShowYesPopup] = useState<boolean>(false);
+
   const enviarRespuesta = async (respuesta: "yes" | "no") => {
     setLoading(true);
     setMsg(null);
@@ -52,6 +57,11 @@ function App() {
       if (!res.ok) throw new Error("Error al guardar");
 
       setMsg("Respuesta guardada correctamente 💌");
+
+      // si es "yes", mostrar el popup persistente adicional
+      if (respuesta === "yes") {
+        setShowYesPopup(true);
+      }
     } catch (err) {
       setMsg("Error al enviar la respuesta ❌");
     } finally {
@@ -498,6 +508,16 @@ function App() {
             />
           </div>
           <div className="popup-caption">{captions[imgIdx] ?? ""}</div>
+        </div>
+      )}
+
+      {/* Popup persistente que aparece al presionar YES (no desaparece automáticamente) */}
+      {showYesPopup && (
+        <div className="popup-overlay" role="dialog" aria-modal="true">
+          <div className="popup-img-wrapper">
+            <img src={yesPopupImage} alt="yes-popup" className="popup-img" />
+          </div>
+          <div className="popup-caption">ttttt</div>
         </div>
       )}
     </div>
