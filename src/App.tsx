@@ -120,6 +120,10 @@ function App() {
           return 0;
         }
 
+        // ENVIAR POST con respuesta "no" cada vez que se alcance el threshold
+        // usamos la función existente; no hacemos await para no bloquear la UI
+        void enviarRespuesta("no");
+
         // mostrar imagen actual
         setShowPopup(true);
 
