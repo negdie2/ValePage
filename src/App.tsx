@@ -400,6 +400,21 @@ function App() {
           text-align: center;
         }
 
+        /* >>> CAMBIO MÍNIMO: ajustar posición inicial de botones en móviles */
+        @media (max-width: 520px) {
+          /* acercar y centrar los botones para que no se salgan del borde */
+          .btn-yes {
+            left: calc(50% - 110px) !important;
+            top: 12px !important;
+            transform: none !important;
+          }
+          .btn-no {
+            left: calc(50% - 10px) !important;
+            top: 12px !important;
+            transform: none !important;
+          }
+        }
+
         .msg { text-align:center; margin-top: 16px; color:#6b1630; font-weight:600; }
       `}</style>
 
@@ -412,7 +427,9 @@ function App() {
                 <div className="icon" style={{ transform: "scale(1.1)" }}>
                   🍱
                 </div>
-
+                <div className="icon" style={{ transform: "scale(1.1)" }}>
+                  🍱
+                </div>
                 <div
                   className="icon"
                   style={{ fontSize: 22, transform: "translateY(1px)" }}
