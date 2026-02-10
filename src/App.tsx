@@ -443,9 +443,9 @@ function App() {
 
               <h1 className="title">Valeeee</h1>
               <p className="subtitle">
-                Me encantaría que nos veamos el 14... pero se que es imposible
-                entonces pensaba que podíamos vernos el viernes y fingir que es
-                14 jajaja
+                Me encantaría que nos veamos el 14😘😍❤️ pero se que es
+                imposible entonces... pensaba que podíamos vernos el viernes y
+                fingir que es 14 jajaja
               </p>
 
               <div className="panel">
