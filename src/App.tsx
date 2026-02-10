@@ -441,12 +441,10 @@ function App() {
                 </div>
               </div>
 
-              <h1 className="title">Valeeee</h1>
+              <h1 className="title">Hola de nuevo😘 jajaj </h1>
               <p className="subtitle">
-                Me encantaría que nos veamos el 14😘 xd pero se que es imposible
-                entonces... pensaba que podíamos vernos el viernes y fingir que
-                es 14 😉 jajajaj
-              </p>
+                Se que ambos estamos viajando pero tengo muchas ganas de verte, se que es un poco apresurado pero contigo todo vale la pena
+                tengo el viernes libre, o puede ser miercoles o jueves despues de tus clases.              </p>
 
               <div className="panel">
                 <div
@@ -455,7 +453,7 @@ function App() {
                   aria-label="Tarjeta de San Valentín"
                 >
                   <div style={{ fontSize: 16, color: "#5a2a61" }}>
-                    Que dices? 😉
+                   Anda, Que dices? 😉 presiona yes y veras algo que te gustara 😂
                   </div>
 
                   <div
