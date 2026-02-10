@@ -23,7 +23,7 @@ function App() {
     "Oyeee",
     "Oyeeeeee",
     "ª no juegues con mis sentimientos :(",
-  ];
+  ]; //test
 
   const [imgIdx, setImgIdx] = useState<number>(0); // para render
   const [showPopup, setShowPopup] = useState<boolean>(false);
