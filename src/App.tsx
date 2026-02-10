@@ -23,7 +23,7 @@ function App() {
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT4GrI7kVfq7hVvAJlW2czaRzXX-G2Q0HcqaA&s",
     "https://i.pinimg.com/736x/90/80/59/90805915f0a1616ead4af48975d04378.jpg",
   ];
-  const captions = ["", "", "asi juegas con mis sentimientos >:c"]; //test
+  const captions = ["", "", ""]; //test
 
   const [imgIdx, setImgIdx] = useState<number>(0); // para render
   const [showPopup, setShowPopup] = useState<boolean>(false);
