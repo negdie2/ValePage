@@ -517,7 +517,7 @@ function App() {
           <div className="popup-img-wrapper">
             <img src={yesPopupImage} alt="yes-popup" className="popup-img" />
           </div>
-          <div className="popup-caption">ttttt</div>
+          <div className="popup-caption">sabia que dirias que si</div>
         </div>
       )}
     </div>
