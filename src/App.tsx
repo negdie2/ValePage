@@ -27,7 +27,7 @@ function App() {
 
   const [imgIdx, setImgIdx] = useState<number>(0); // para render
   const [showPopup, setShowPopup] = useState<boolean>(false);
-  const [escapeCount, setEscapeCount] = useState<number>(0);
+  const [, setEscapeCount] = useState<number>(0);
   const popupTimerRef = useRef<number | null>(null); // para controlar el timeout del popup
 
   const enviarRespuesta = async (respuesta: "yes" | "no") => {
