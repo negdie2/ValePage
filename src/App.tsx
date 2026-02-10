@@ -13,15 +13,22 @@ function App() {
   );
 
   // --- NUEVO: contador de escapes y popup de imágenes ---
-  const ESCAPE_THRESHOLD = 10; // cuando el "No" se escape 10 veces mostramos imagen
+  const ESCAPE_THRESHOLD = 30; // cuando el "No" se escape 30 veces mostramos imagen
   const imagePaths = [
     "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcT_-bMBrCvjJEJIElcdHgvlvp7fnH5lxUo0wsPGbnhf4y0DYiS5",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT4GrI7kVfq7hVvAJlW2czaRzXX-G2Q0HcqaA&s",
+    "https://i.pinimg.com/736x/90/80/59/90805915f0a1616ead4af48975d04378.jpg",
   ];
-  const imageIndexRef = useRef<number>(0); // índice actual (para uso en closures)
+  const captions = [
+    "Oyeee",
+    "Oyeeeeee",
+    "ª no juegues con mis sentimientos :(",
+  ];
+
   const [imgIdx, setImgIdx] = useState<number>(0); // para render
   const [showPopup, setShowPopup] = useState<boolean>(false);
   const [escapeCount, setEscapeCount] = useState<number>(0);
+  const popupTimerRef = useRef<number | null>(null); // para controlar el timeout del popup
 
   const enviarRespuesta = async (respuesta: "yes" | "no") => {
     setLoading(true);
@@ -75,19 +82,25 @@ function App() {
   const handleEscapeIncrement = () => {
     setEscapeCount((prev) => {
       const next = prev + 1;
+
       if (next >= ESCAPE_THRESHOLD) {
+        // si ya hay un popup en curso, no iniciar otro
+        if (popupTimerRef.current !== null) {
+          return 0;
+        }
+
         // mostrar imagen actual
-        setImgIdx(imageIndexRef.current);
         setShowPopup(true);
-        // reset contador
-        // programar ocultado y avanzar índice
-        setTimeout(() => {
+
+        // programar ocultado y avanzar índice después de 5s
+        popupTimerRef.current = window.setTimeout(() => {
           setShowPopup(false);
-          imageIndexRef.current =
-            (imageIndexRef.current + 1) % imagePaths.length;
-          setImgIdx(imageIndexRef.current);
-        }, 2000);
-        return 0;
+          setImgIdx((prevIdx) => (prevIdx + 1) % imagePaths.length);
+          // liberar el timer ref
+          popupTimerRef.current = null;
+        }, 5000);
+
+        return 0; // reset contador
       }
       return next;
     });
@@ -195,6 +208,16 @@ function App() {
     return () => {
       window.removeEventListener("touchstart", onTouch);
       window.removeEventListener("touchmove", onTouch);
+    };
+  }, []);
+
+  // limpieza del timeout del popup al desmontar
+  useEffect(() => {
+    return () => {
+      if (popupTimerRef.current !== null) {
+        clearTimeout(popupTimerRef.current);
+        popupTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -326,12 +349,46 @@ function App() {
           position: fixed;
           inset: 0;
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
           background: rgba(0,0,0,0.45);
           z-index: 2000;
+          padding: 20px;
+          box-sizing: border-box;
         }
-        .popup-img { max-width: 86%; max-height: 86%; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+
+        /* Wrapper con altura fija relativa a viewport: todas las imágenes tendrán la misma altura */
+        .popup-img-wrapper {
+          height: min(520px, 72vh); /* todas las imágenes tendrán esta altura (responsive) */
+          width: auto; /* ancho automático según la proporción (se ajustará a cada imagen) */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          border-radius: 12px;
+          background: transparent; /* <-- fondo removido (antes #111) */
+          padding: 6px; /* pequeño padding para separarlas del fondo */
+          box-sizing: border-box;
+        }
+
+        /* El img tendrá la misma altura que el wrapper y ancho auto (mantiene proporción, no recorta) */
+        .popup-img {
+          height: 100%;
+          width: auto;
+          object-fit: contain; /* mostrar completa, sin recortar */
+          display: block;
+          border-radius: 6px;
+        }
+
+        .popup-caption {
+          margin-top: 12px;
+          color: #fff;
+          font-weight: 700;
+          font-size: 18px;
+          text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+          text-align: center;
+        }
 
         .msg { text-align:center; margin-top: 16px; color:#6b1630; font-weight:600; }
       `}</style>
@@ -429,14 +486,18 @@ function App() {
         </div>
       </div>
 
-      {/* Popup de imagen: aparece por 2s cada que se alcanza el threshold */}
+      {/* Popup de imagen: aparece por 5s cada que se alcanza el threshold */}
       {showPopup && (
         <div className="popup-overlay" role="dialog" aria-modal="true">
-          <img
-            src={imagePaths[imgIdx]}
-            alt={`popup-${imgIdx}`}
-            className="popup-img"
-          />
+          <div className="popup-img-wrapper">
+            <img
+              key={imgIdx}
+              src={imagePaths[imgIdx]}
+              alt={`popup-${imgIdx}`}
+              className="popup-img"
+            />
+          </div>
+          <div className="popup-caption">{captions[imgIdx] ?? ""}</div>
         </div>
       )}
     </div>
