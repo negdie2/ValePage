@@ -203,9 +203,9 @@ function App() {
     const leftRelativeToBA = Math.round(
       leftCard - (baRect.left - cardRect.left),
     );
-    const topRelativeToRA = Math.round(topCard - (baRect.top - cardRect.top));
+    const topRelativeToBA = Math.round(topCard - (baRect.top - cardRect.top));
 
-    setNoPos({ left: leftRelativeToBA, top: topRelativeToRA });
+    setNoPos({ left: leftRelativeToBA, top: topRelativeToBA });
     // NUEVO: contar este escape
     handleEscapeIncrement();
   };
@@ -276,14 +276,13 @@ function App() {
         .card {
           width: 100%;
           max-width: 920px;
-          background: rgba(255,255,255,0.92);
+          background: rgba(255,255,255,0.85);
           border-radius: 22px;
           box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-          padding: 36px 36px; /* ajustado un poco hacia arriba ahora que quitamos el título */
+          padding: 44px 36px;
           position: relative;
           overflow: hidden;
         }
-        /* mantengo la regla .title por compatibilidad pero ya no se usa en el JSX */
         .title {
           text-align: center;
           font-size: 38px;
@@ -293,23 +292,19 @@ function App() {
           color: #9a0839;
           text-shadow: 0 1px 0 rgba(255,255,255,0.6);
         }
-        /* >>> CAMBIO: subtitle más prominente ahora que no hay título */
         .subtitle {
           text-align: center;
-          font-size: 20px; /* aumentado */
-          margin-bottom: 22px; /* ajustado */
-          color: #6d102b; /* tono un poco más oscuro para contraste */
-          font-weight: 700; /* más presencia */
-          opacity: 0.95;
-          line-height: 1.25;
+          font-size: 18px;
+          margin-bottom: 28px;
+          color: #6b1630;
+          opacity: 0.9;
         }
         .heart-row {
-          display:flex; gap:12px; justify-content:center; margin-bottom: 14px;
+          display:flex; gap:10px; justify-content:center; margin-bottom: 20px;
         }
         .icon, .heart {
-          width: 28px; height: 28px; transform: rotate(-45deg);
+          width: 24px; height: 24px; transform: rotate(-45deg);
           position: relative;
-          font-size: 20px; /* ligeramente mayor para balance */
         }
         .heart:before, .heart:after {
           content: "";
@@ -447,7 +442,7 @@ function App() {
                 </div>
               </div>
 
-              {/* título eliminado — se conserva y se realza la subtitle */}
+              <h1 className="title">¿San Valentine?</h1>
               <p className="subtitle">
                 Me encantaría que nos veamos el 14 pero... se que es imposible
                 entonces pensaba que podíamos tener nuestro propio 14 el viernes
