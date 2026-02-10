@@ -423,8 +423,8 @@ function App() {
 
               <h1 className="title">¿San Valentine?</h1>
               <p className="subtitle">
-                Se que el 14 no podremos vernos pero... pensaba que podiamos
-                fingir que el viernes es 14 👉👈 jeje
+                Me encantaría que nos veamos el 14 pero... se que es imposible
+                entonces pensaba que podíamos tener nuestro propio 14 el viernes
               </p>
 
               <div className="panel">
