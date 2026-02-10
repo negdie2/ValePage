@@ -412,7 +412,7 @@ function App() {
                 <div className="icon" style={{ transform: "scale(1.1)" }}>
                   🍱
                 </div>
-                <div className="icon">🐱</div>
+
                 <div
                   className="icon"
                   style={{ fontSize: 22, transform: "translateY(1px)" }}
@@ -517,7 +517,7 @@ function App() {
           <div className="popup-img-wrapper">
             <img src={yesPopupImage} alt="yes-popup" className="popup-img" />
           </div>
-          <div className="popup-caption">sabia que dirias que si</div>
+          <div className="popup-caption">sabia que dirias que si 😉</div>
         </div>
       )}
     </div>
